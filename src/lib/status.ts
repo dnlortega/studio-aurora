@@ -48,7 +48,7 @@ export type StatusInput = {
     | {
         connected: boolean;
         latencyMs: number | null;
-        driver: "pglite" | "postgres" | null;
+        driver: "postgres" | null;
         target: string | null;
         autoMigrate: boolean | null;
         migrationsApplied: number | null;
@@ -93,8 +93,7 @@ const VERCEL_REGIONS: Record<string, string> = {
   "fra1": "Frankfurt (Alemanha)",
 };
 
-function driverLabel(driver: "pglite" | "postgres", target: string | null) {
-  if (driver === "pglite") return "PostgreSQL embutido (PGlite)";
+function driverLabel(driver: "postgres", target: string | null) {
   if (target?.includes("neon.tech")) return "PostgreSQL gerenciado (Neon)";
   if (target?.includes("supabase")) return "PostgreSQL (Supabase)";
   return "PostgreSQL externo";
@@ -165,11 +164,8 @@ export function buildStatusSections(input: StatusInput): StatusSection[] {
     banco.push({
       label: "Motor",
       value: driver ? driverLabel(driver, target) : "desconhecido",
-      tone: driver === "pglite" ? "warn" : "ok",
-      detail:
-        driver === "pglite"
-          ? "banco local em disco — indisponível em serverless (Vercel)"
-          : target ?? undefined,
+      tone: driver ? "ok" : "warn",
+      detail: target ?? undefined,
     });
     banco.push({
       label: "Destino",
@@ -426,19 +422,15 @@ export async function getSystemStatus(): Promise<SystemStatus> {
       migrationsApplied = null;
     }
 
-    // `createDatabase` escolhe postgres quando existe DATABASE_URL e PGlite
-    // caso contrário; sem os metadados do processo dá para inferir com segurança.
-    const inferredDriver: "pglite" | "postgres" = process.env.DATABASE_URL
-      ? "postgres"
-      : "pglite";
-    const inferredTarget = process.env.DATABASE_URL
-      ? redactDatabaseUrl(process.env.DATABASE_URL)
-      : process.env.PGLITE_DIR ?? ".data/pglite";
+    // O app só fala com PostgreSQL externo; sem os metadados do processo o
+    // destino sai da própria variável de ambiente.
+    const databaseUrl = process.env.DATABASE_URL?.trim();
+    const inferredTarget = databaseUrl ? redactDatabaseUrl(databaseUrl) : null;
 
     database = {
       connected: true,
       latencyMs,
-      driver: info?.driver ?? inferredDriver,
+      driver: info?.driver ?? (databaseUrl ? "postgres" : null),
       target: info?.target ?? inferredTarget,
       autoMigrate: info?.autoMigrate ?? null,
       migrationsApplied,

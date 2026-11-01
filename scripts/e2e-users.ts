@@ -1,6 +1,9 @@
 /**
- * Credenciais exclusivas dos testes E2E locais.
- * Nunca são criadas em produção: o script reset-e2e só roda em PGlite local.
+ * Credenciais dos testes ponta a ponta.
+ *
+ * Só existem no banco de teste `aurora_e2e` da Neon, que é zerado antes de cada
+ * suíte — nunca no banco do salão e nunca em produção. São contas fictícias de
+ * teste, não credenciais reais; por isso podem ficar no repositório.
  */
 export const E2E_USERS = {
   admin: {

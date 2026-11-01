@@ -1,25 +1,21 @@
 import path from "node:path";
-import { mkdirSync } from "node:fs";
-import { PGlite } from "@electric-sql/pglite";
-import { drizzle as drizzlePglite, type PgliteDatabase } from "drizzle-orm/pglite";
-import { migrate as migratePglite } from "drizzle-orm/pglite/migrator";
-import { drizzle as drizzlePostgres } from "drizzle-orm/postgres-js";
-import { migrate as migratePostgres } from "drizzle-orm/postgres-js/migrator";
+import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 
 import * as schema from "./schema";
 
-export type AppDb = PgliteDatabase<typeof schema>;
+export type AppDb = PostgresJsDatabase<typeof schema>;
 
 /**
  * Descrição pública do banco em uso, sem credenciais. Usada pelo painel de
  * status (`/admin/status`) e por diagnósticos.
  */
 export type DbRuntimeInfo = {
-  driver: "pglite" | "postgres";
+  driver: "postgres";
   /**
-   * `host:porta/base` quando há DATABASE_URL (usuário e senha são removidos)
-   * ou o diretório local quando o banco é o PGlite embutido.
+   * `host:porta/base` de `DATABASE_URL` — usuário e senha são removidos antes
+   * de qualquer exibição.
    */
   target: string;
   startedAt: Date;
@@ -36,12 +32,13 @@ const globalForDb = globalThis as DbGlobal;
 
 const MIGRATIONS_FOLDER = path.join(process.cwd(), "drizzle");
 
-function shouldAutoMigrate(hasUrl: boolean) {
+function shouldAutoMigrate() {
   const flag = process.env.DB_AUTO_MIGRATE;
-  if (flag === "false") return false;
   if (flag === "true") return true;
-  // Sem URL = banco embutido de desenvolvimento: migra sempre.
-  return !hasUrl;
+  // O padrão é não migrar no boot: em produção quem aplica migração é o
+  // `npm run db:migrate`, e duas functions serverless migrando ao mesmo tempo
+  // corrompe o journal do Drizzle.
+  return false;
 }
 
 async function ensureDefaults(db: AppDb) {
@@ -117,81 +114,62 @@ export function redactDatabaseUrl(databaseUrl: string): string {
   }
 }
 
+/**
+ * Abre uma conexão com o PostgreSQL da Neon.
+ *
+ * Não existe banco local: `DATABASE_URL` é obrigatória em desenvolvimento,
+ * teste e produção. Assim o que aparece na tela é sempre o mesmo conjunto de
+ * dados, e nenhum teste precisa de um Postgres embutido na máquina de quem
+ * programa.
+ */
 export async function createDatabase(options?: {
   databaseUrl?: string;
-  dataDir?: string;
   autoMigrate?: boolean;
 }): Promise<{
   db: AppDb;
   close: () => Promise<void>;
-  driver: "pglite" | "postgres";
+  driver: "postgres";
   info: DbRuntimeInfo;
 }> {
-  const databaseUrl = options?.databaseUrl ?? process.env.DATABASE_URL;
+  const databaseUrl =
+    options?.databaseUrl?.trim() || process.env.DATABASE_URL?.trim() || "";
 
-  // Em serverless (Vercel) o disco é somente leitura e cada instância é
-  // efêmera: o PGlite local não serve. Falha cedo com mensagem clara.
-  if (!databaseUrl && process.env.VERCEL) {
+  if (!databaseUrl) {
     throw new Error(
-      "DATABASE_URL não configurada. Na Vercel, use um PostgreSQL gerenciado (ex.: Neon) nas variáveis de ambiente.",
+      "DATABASE_URL não configurada. O Studio Aurora usa exclusivamente o PostgreSQL da Neon — copie o valor de .env.local (ou defina a variável) e rode novamente.",
     );
   }
 
-  const dataDir =
-    options?.dataDir ?? process.env.PGLITE_DIR ?? ".data/pglite";
-  const migrate = options?.autoMigrate ?? shouldAutoMigrate(Boolean(databaseUrl));
+  const migrateOnBoot = options?.autoMigrate ?? shouldAutoMigrate();
 
-  if (databaseUrl) {
-    const client = postgres(databaseUrl, {
-      max: 5,
-      prepare: false,
-      idle_timeout: 20,
-    });
-    const db = drizzlePostgres(client, { schema }) as unknown as AppDb;
-    if (migrate) {
-      await migratePostgres(db as never, { migrationsFolder: MIGRATIONS_FOLDER });
-    }
-    await ensureDefaults(db);
-    const info: DbRuntimeInfo = {
-      driver: "postgres",
-      target: redactDatabaseUrl(databaseUrl),
-      startedAt: new Date(),
-      autoMigrate: migrate,
-    };
-    return {
-      db,
-      driver: "postgres",
-      info,
-      close: async () => {
-        await client.end({ timeout: 5 });
-      },
-    };
-  }
-
-  mkdirSync(dataDir, { recursive: true });
-  const client = new PGlite(dataDir);
-  await client.waitReady;
-  const db = drizzlePglite(client, { schema });
-  if (migrate) {
-    await migratePglite(db, { migrationsFolder: MIGRATIONS_FOLDER });
+  const client = postgres(databaseUrl, {
+    max: 5,
+    prepare: false,
+    idle_timeout: 20,
+    // Os NOTICE do Postgres (`relation ... already exists, skipping`) são
+    // esperados durante migração idempotente; imprimi-los faria todo seed
+    // parecer que algo deu errado.
+    onnotice: () => {},
+  });
+  const db = drizzle(client, { schema });
+  if (migrateOnBoot) {
+    await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
   }
   await ensureDefaults(db);
 
   const info: DbRuntimeInfo = {
-    driver: "pglite",
-    // Caminho relativo de propósito: resolver com `process.cwd()` faria o
-    // Turbopack rastrear o projeto inteiro para o bundle de produção.
-    target: dataDir,
+    driver: "postgres",
+    target: redactDatabaseUrl(databaseUrl),
     startedAt: new Date(),
-    autoMigrate: migrate,
+    autoMigrate: migrateOnBoot,
   };
 
   return {
     db,
-    driver: "pglite",
+    driver: "postgres",
     info,
     close: async () => {
-      await client.close();
+      await client.end({ timeout: 5 });
     },
   };
 }

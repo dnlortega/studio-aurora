@@ -13,14 +13,13 @@
     "db:migrate:legacy": "node --env-file-if-exists=.env.local --import tsx scripts/migrate-legacy.ts",
     "db:seed": "node --env-file-if-exists=.env.local --import tsx scripts/seed.ts",
     "admin:create": "node --env-file-if-exists=.env.local --import tsx scripts/create-admin.ts",
-    "db:reset:e2e": "node --env-file-if-exists=.env.test --import tsx scripts/reset-e2e.ts",
+    "db:reset:e2e": "node --env-file-if-exists=.env.local --import tsx scripts/reset-e2e.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
-    "@electric-sql/pglite": "^0.5.13",
     "@hookform/resolvers": "^6.0.2",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",

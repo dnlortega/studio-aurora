@@ -15,8 +15,8 @@ cancelamento e remarcação, histórico e relatórios.
 | ------------- | ---------------------------------------------------------------------- |
 | Framework     | Next.js 16 (App Router, Turbopack) + React 19 + TypeScript strict      |
 | UI            | shadcn/ui (base-nova, Base UI) + Tailwind CSS v4 + Lucide              |
-| Banco         | PostgreSQL (Neon em produção) via Drizzle ORM                          |
-| Banco local   | PGlite (PostgreSQL embutido em WebAssembly) — sem Docker               |
+| Banco         | PostgreSQL gerenciado (Neon) via Drizzle ORM — único banco do projeto   |
+| Bancos de teste | `aurora_test` (Vitest) e `aurora_e2e` (Playwright), no mesmo projeto Neon |
 | Autenticação  | Sessões opacas próprias (scrypt + cookie httpOnly), sem Supabase Auth   |
 | Validação     | Zod + React Hook Form                                                  |
 | E-mail        | Resend (opcional; sem chave o envio fica como `not_configured`)        |
@@ -67,8 +67,15 @@ cancelamento e remarcação, histórico e relatórios.
 
 **Tela de acesso**
 
-- Link “Ver contas cadastradas”, visível **somente em desenvolvimento**
-  (`NODE_ENV !== "production"`). Em produção ele simplesmente não existe.
+- Seção “N contas cadastradas”, renderizada **somente em desenvolvimento**
+  (`NODE_ENV !== "production"`), lida direto do banco: nome, e-mail, papel e o
+  tipo de hash de cada conta, cada uma com um botão “Entrar como”. Em produção a
+  seção não existe.
+- Senha nenhuma é exibida ou copiável: a conta guarda apenas o hash (scrypt;
+  bcrypt nas contas migradas do sistema antigo), função de mão única. O botão
+  cria a sessão no servidor (`devImpersonateAction`), grava o evento na trilha
+  de auditoria e abre o painel daquele perfil — e a ação se recusa a rodar em
+  produção mesmo se alguém POSTar a rota direto.
 - Formulários de login, cadastro, recuperação e redefinição são server actions:
   o HTML já sai do servidor com `method="post"`, então e-mail e senha viajam no
   corpo da requisição — inclusive sem JavaScript — e nunca aparecem na URL, no
@@ -84,7 +91,9 @@ cancelamento e remarcação, histórico e relatórios.
 
 - Node.js 20.9+ (recomendado 22 ou 24)
 - npm 10+
-- Nenhum Docker é necessário para desenvolver (PGlite embutido)
+- Um banco PostgreSQL no Neon (ou outro provedor externo) — não há banco local
+  embutido; sem `DATABASE_URL` o app falha com mensagem explícita
+- Nenhum Docker é necessário
 
 ---
 
@@ -95,28 +104,36 @@ git clone <url-do-repositorio>
 cd studio-aurora
 npm install
 cp .env.example .env.local
-# edite .env.local: AUTH_SECRET e, se quiser, DATABASE_URL
+# edite .env.local: DATABASE_URL (Neon), AUTH_SECRET e NEXT_PUBLIC_APP_URL
+npm run db:migrate
+npm run db:seed
 npm run dev
 ```
 
 Acesse <http://localhost:3000>.
 
-Sem `DATABASE_URL`, o app cria automaticamente um PostgreSQL local em
-`.data/pglite`, aplica as migrações e insere configurações/horários padrão.
+Desenvolvimento, testes e produção usam o mesmo serviço Neon. O aplicativo usa o
+banco do `DATABASE_URL` (por padrão, `neondb`); os testes usam bancos separados
+no mesmo projeto — `aurora_test` para o Vitest e `aurora_e2e` para o Playwright
+— criados e zerados pelos próprios scripts. Nenhuma rotina de teste alcança os
+dados do salão: as guards em `scripts/neon-test-db.ts` recusam qualquer banco
+que não tenha exatamente um desses dois nomes.
 
 ### Variáveis de ambiente
 
 | Variável | Obrigatória | Descrição |
 | --- | --- | --- |
-| `DATABASE_URL` | produção | URL PostgreSQL. Vazio em dev = PGlite local. |
-| `PGLITE_DIR` | não | Pasta do PGlite (padrão `.data/pglite`). |
-| `DB_AUTO_MIGRATE` | não | `true` aplica migrações ao abrir o banco. Use `false` em produção. |
+| `DATABASE_URL` | sim | URL do PostgreSQL na Neon. Não há fallback local. |
+| `TEST_DATABASE_URL` | não | Override do banco do Vitest (padrão: mesmo host, banco `aurora_test`). |
+| `E2E_DATABASE_URL` | não | Override do banco do Playwright (padrão: mesmo host, banco `aurora_e2e`). |
+| `DB_AUTO_MIGRATE` | não | `true` aplica migrações ao abrir o banco. O padrão é `false`: migração é o `npm run db:migrate`. |
 | `AUTH_SECRET` | sim | Segredo de 32+ caracteres para derivar tokens de sessão. |
 | `NEXT_PUBLIC_APP_URL` | sim | URL pública usada nos links de redefinição. |
+| `DEV_ORIGINS` | não | Origens (IP:porta) autorizadas para o HMR ao abrir o app pela rede local. |
 | `RESEND_API_KEY` | não | Habilita envio de e-mails. Sem ela, nada é simulado como enviado. |
 | `EMAIL_FROM` | não | Remetente dos e-mails (ex.: `Studio Aurora <agenda@dominio.com>`). |
 | `NEXT_PUBLIC_REPOSITORY_URL` | não | Link do repositório exibido em `/admin/status` fora da Vercel. |
-| `SEED_ADMIN_*` | não | Apenas para o seed de demonstração local. |
+| `SEED_ADMIN_*` | não | Apenas para o seed de demonstração. |
 
 Gere um segredo com:
 
@@ -128,16 +145,14 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 
 ## Banco de dados
 
-### Desenvolvimento (PGlite)
+### Desenvolvimento (Neon)
 
 ```bash
-npm run db:seed     # catálogo + configurações + admin demo (se SEED_ADMIN_* definido)
+npm run db:migrate    # aplica as migrações Drizzle no banco do DATABASE_URL
+npm run db:seed       # catálogo + configurações + admin demo (se SEED_ADMIN_* definido)
 ```
 
-O banco fica em `.data/pglite`. Para recomeçar do zero, pare o servidor e apague
-a pasta (ou use outro `PGLITE_DIR`).
-
-### Produção (Neon/PostgreSQL)
+### Produção (Neon)
 
 ```bash
 DATABASE_URL="postgresql://..." npm run db:migrate
@@ -191,23 +206,23 @@ definidos — nunca use essas credenciais em produção.
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript sem emitir |
 | `npm test` | Vitest (unitários + integração) |
-| `npm run test:e2e` | Playwright com PGlite isolado em `.data/e2e` |
+| `npm run test:e2e` | Playwright contra o banco Neon `aurora_e2e` |
 | `npm run db:generate` | Gera migração Drizzle a partir do schema |
 | `npm run db:migrate` | Aplica migrações |
 | `npm run db:migrate:legacy` | Migra dados do banco antigo |
 | `npm run db:seed` | Catálogo/configurações/admin demo |
 | `npm run admin:create` | Cria administrador com senha segura |
-| `npm run db:reset:e2e` | Recria o banco dos testes E2E |
+| `npm run db:reset:e2e` | Zera e re-migra o banco Neon `aurora_e2e` |
 
 ---
 
 ## Testes
 
 ```bash
-npm test                 # unitários + integração (PGlite isolado por arquivo)
+npm test                 # unitários + integração (banco Neon aurora_test, re-migrado por arquivo)
 npm run typecheck
 npm run build
-npm run test:e2e         # sobe o app na porta 3100 com banco próprio
+npm run test:e2e         # sobe o app na porta 3100 com o banco Neon aurora_e2e
 ```
 
 Os testes de integração cobrem criação de reserva com snapshot de preço,
@@ -219,13 +234,23 @@ o painel de status (redação de segredos, classificação de erros e tom de cad
 aviso).
 
 Os E2E cobrem cadastro, login/logout, fluxo de agendamento completo, painel,
-recuperação de senha e dois cenários de segurança:
+recuperação de senha, o atalho “Entrar como” e três cenários de segurança:
 
 - **login com JavaScript desativado** — confirma que o `<form>` é `POST` e que a
   URL final (`/admin`) não contém e-mail nem senha;
+- **“Entrar como”** — cada linha da lista abre o painel do seu perfil, o HTML
+  não contém nenhuma senha e nenhum POST leva senha ou e-mail na URL; um POST
+  forjado com conta inexistente volta para `/entrar?erro=dev` sem emitir cookie
+  de sessão;
 - **`/admin/status`** — anônimo vai para `/entrar?next=`, cliente vai para
   `/painel?aviso=sem-permissao` e o administrador vê as quatro seções sem que o
   valor do `AUTH_SECRET` apareça no HTML.
+
+Como o banco agora é externo, cada página custa várias idas pela rede: os
+timeoutes do Playwright são maiores que os de um banco em processo (`expect`
+30 s, teste 180 s). E o Next 16 não mantém dois `next dev` na mesma pasta — o
+`npm run dev` precisa estar parado antes do `npm run test:e2e`; um preflight
+avisa disso antes de mexer em qualquer banco.
 
 O Playwright baixa o Chromium na primeira execução:
 
@@ -239,13 +264,16 @@ npx playwright install chromium
 request e sob demanda:
 
 - **Types, lint, testes e build** — `typecheck`, `eslint`, `vitest` e
-  `next build` (com `DATABASE_URL` vazio, então o banco é o PGlite embutido);
-- **Playwright** — sobe `next dev` na porta 3100 com `.data/e2e` recriado do zero
-  e publica o relatório HTML com os rastros e as capturas de tela quando algo
-  falha.
+  `next build`, todos contra o PostgreSQL da Neon;
+- **Playwright** — sobe `next dev` na porta 3100 com o banco `aurora_e2e` zerado
+  e re-migrado do zero e publica o relatório HTML com os rastros e as capturas
+  de tela quando algo falha.
 
-Os dois jobs não usam segredos do repositório: o `AUTH_SECRET` do workflow é um
-valor fictício, apenas para a derivação de sessão funcionar.
+O CI precisa do segredo `DATABASE_URL` (o mesmo `postgresql://…neon.tech/…` do
+`.env.local`); sem ele os jobs falham com mensagem explícita em vez de pular os
+testes. O banco usado pelos testes é sempre o `aurora_test`/`aurora_e2e` derivado
+do mesmo host — o workflow não toca no banco do salão. O `AUTH_SECRET` do
+workflow é um valor fictício, apenas para a derivação de sessão funcionar.
 
 ---
 
@@ -280,8 +308,8 @@ valor fictício, apenas para a derivação de sessão funcionar.
    Neon, migrações aplicadas, região da Vercel, commit publicado e quais chaves
    de integração estão presentes.
 
-O app falha com mensagem clara se rodar na Vercel sem `DATABASE_URL` — o
-disco serverless não é adequado ao PGlite.
+O app recusa a subir sem `DATABASE_URL`: não existe banco em disco, então cada
+instância serverless fala com o mesmo PostgreSQL da Neon.
 
 ---
 
@@ -338,7 +366,16 @@ disco serverless não é adequado ao PGlite.
   e nascem como `POST` no HTML, funcionando igual sem JavaScript.
 - `/admin/status` é só para administrador e mostra no máximo a *presença* das
   chaves; mensagens de erro do driver são redigidas antes de aparecer na tela.
-- A lista de contas cadastradas na tela de acesso existe apenas em `development`.
+- A lista de contas cadastradas na tela de acesso existe apenas em `development`
+  e não revela senha: o botão “Entrar como” abre a sessão no servidor
+  (`devImpersonateAction`), que se recusa a funcionar em produção e registra o
+  evento na auditoria.
+- Senha em texto plano não existe em lugar nenhum — nem no banco, nem no
+  `.env.local`, nem no código dos testes de ponta a ponta além de contas
+  fictícias do banco `aurora_e2e`. O que o banco guarda é hash irreversível.
+- Desenvolvimento, testes e produção usam o mesmo serviço Neon, com bancos
+  separados para os testes; nenhuma rotina automatizada escreve no banco do
+  salão.
 - Auditoria de ações administrativas e histórico por agendamento.
 - Nenhuma credencial privada é exposta no bundle do navegador.
 - Dados pessoais limitados ao necessário; exclusão de conta não é automática
@@ -363,7 +400,7 @@ src/
   lib/
     auth/             Sessão, senha, reset, guards
     booking/          Motor de disponibilidade, reservas e consultas
-    db/               Drizzle schema + conexão (PGlite/Postgres)
+    db/               Drizzle schema + conexão (PostgreSQL/Neon)
     validation/       Schemas Zod
 scripts/              Seed, admin, migrações, reset E2E
 tests/                Unitários, integração, E2E

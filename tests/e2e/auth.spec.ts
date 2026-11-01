@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-import { E2E_USERS, login, logout } from "./helpers";
+import {
+  E2E_USERS,
+  login,
+  loginAsDev,
+  logout,
+} from "./helpers";
 
 test.describe("autenticação e perfis", () => {
   test("cadastro público cria sempre uma conta de cliente", async ({ page }) => {
@@ -153,6 +158,99 @@ test.describe("autenticação e perfis", () => {
     expect(page.url()).toBe("http://localhost:3100/admin");
 
     await context.close();
+  });
+
+  /**
+   * Atalho de desenvolvimento da tela de login.
+   *
+   * O pedido foi "clicar e entrar com cada conta". Como as senhas existem no
+   * banco apenas como hash irreversível, o atalho não mostra senha nenhuma: a
+   * lista sai do banco (nome, e-mail, papel e tipo de hash) e o botão cria a
+   * sessão no servidor. Em produção a seção nem é renderizada.
+   */
+  test("atalho 'Entrar como' abre o painel de cada conta sem senha", async ({
+    page,
+  }) => {
+    await page.goto("/entrar");
+    const section = page
+      .locator("details")
+      .filter({ hasText: "só em desenvolvimento" });
+    await expect(section).toBeVisible();
+    await section.locator("summary").click();
+
+    for (const name of [
+      E2E_USERS.admin.name,
+      E2E_USERS.client.name,
+      E2E_USERS.otherClient.name,
+    ]) {
+      await expect(
+        section.getByRole("button", { name: `Entrar como ${name}` }),
+      ).toBeVisible();
+    }
+
+    const html = await page.content();
+    expect(html).toContain("hash:");
+    expect(html).toContain(E2E_USERS.admin.email);
+    for (const password of [
+      E2E_USERS.admin.password,
+      E2E_USERS.client.password,
+      E2E_USERS.otherClient.password,
+    ]) {
+      expect(html, "senha não deve aparecer no HTML").not.toContain(password);
+    }
+
+    const urls: string[] = [];
+    page.on("request", (request) => urls.push(request.url()));
+
+    await section
+      .getByRole("button", { name: `Entrar como ${E2E_USERS.admin.name}` })
+      .click();
+    await expect(page).toHaveURL(/\/admin$/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: /Aurora/ }),
+    ).toBeVisible();
+
+    await logout(page);
+
+    await loginAsDev(page, E2E_USERS.client.name, /\/painel$/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: /Cliente/ }),
+    ).toBeVisible();
+
+    for (const url of urls) {
+      expect(url.toLowerCase()).not.toContain("password");
+      expect(url.toLowerCase()).not.toContain("senha");
+      expect(url).not.toContain(E2E_USERS.admin.password);
+    }
+  });
+
+  /**
+   * A tela esconde o botão, mas a ação é uma rota pública: alguém pode enviar o
+   * POST direto. Aqui a tentativa usa uma conta que não existe e precisa voltar
+   * para a tela de login sem receber cookie de sessão.
+   */
+  test("POST forjado do atalho não cria sessão para conta inexistente", async ({
+    page,
+    request,
+  }) => {
+    await page.goto("/entrar");
+    const html = await page.content();
+    const actionId = html.match(
+      /ml-auto[^>]*>\s*<input type="hidden" name="(\$ACTION_ID_[0-9a-f]+)"/,
+    )?.[1];
+    expect(actionId, "ação de desenvolvimento ausente no HTML").toBeTruthy();
+
+    const response = await request.post("/entrar", {
+      multipart: { [actionId as string]: "", email: "nao-existe@studioaurora.local" },
+      maxRedirects: 0,
+    });
+
+    expect([302, 303, 307]).toContain(response.status());
+    const location = response.headers()["location"] ?? "";
+    expect(location).toContain("/entrar");
+    expect(location).toContain("erro=dev");
+    const setCookie = response.headers()["set-cookie"] ?? "";
+    expect(setCookie).not.toContain("aurora_sessao");
   });
 
   test("status do servidor é restrito ao administrador e não revela chaves", async ({

@@ -1,7 +1,3 @@
-import path from "node:path";
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-
 import { createDatabase } from "@/lib/db";
 import type { AppDb } from "@/lib/db";
 import {
@@ -12,6 +8,11 @@ import {
   type User,
 } from "@/lib/db/schema";
 import { seedCatalog } from "../../scripts/seed-data";
+import {
+  ensureTestDatabase,
+  resetTestDatabase,
+  resolveTestDatabaseUrl,
+} from "../../scripts/neon-test-db";
 
 export type TestContext = {
   db: AppDb;
@@ -23,13 +24,20 @@ export type TestContext = {
 };
 
 /**
- * Banco PostgreSQL embutido (PGlite) isolado por arquivo de teste. As migrations
- * reais são aplicadas, então as constraints e índices são os mesmos do banco de
- * produção.
+ * Banco de teste no Neon (`aurora_test`), recriado a cada arquivo de teste.
+ *
+ * As migrações reais são aplicadas, então as constraints e índices são os
+ * mesmos do banco do salão — e como o banco é outro, o `DROP OWNED BY` que zera
+ * o estado nunca alcança os dados do aplicativo.
  */
 export async function createTestContext(): Promise<TestContext> {
-  const dataDir = mkdtempSync(path.join(tmpdir(), "aurora-test-"));
-  const created = await createDatabase({ dataDir, autoMigrate: true });
+  await ensureTestDatabase("unit");
+  await resetTestDatabase("unit");
+
+  const created = await createDatabase({
+    databaseUrl: resolveTestDatabaseUrl("unit"),
+    autoMigrate: false,
+  });
 
   await created.db
     .update(settings)
@@ -91,7 +99,6 @@ export async function createTestContext(): Promise<TestContext> {
     clientB,
     close: async () => {
       await created.close();
-      rmSync(dataDir, { recursive: true, force: true });
     },
   };
 }

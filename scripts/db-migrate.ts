@@ -3,7 +3,7 @@ import { createDatabase } from "@/lib/db";
 async function main() {
   const created = await createDatabase({ autoMigrate: true });
   console.log(
-    `Migrações aplicadas com sucesso no banco ${created.driver === "pglite" ? "embutido (PGlite)" : "PostgreSQL"}.`,
+    `Migrações aplicadas com sucesso no PostgreSQL em ${created.info.target}.`,
   );
   await created.close();
 }

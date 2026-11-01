@@ -87,6 +87,21 @@ export async function logout(page: Page) {
   await expect(page).toHaveURL(/\/$/);
 }
 
+/**
+ * Entra pela lista de desenvolvimento da tela de login (botão "Entrar como").
+ *
+ * Não usa senha: a seção existe só quando NODE_ENV não é produção e a sessão é
+ * criada no servidor pela ação `devImpersonateAction`.
+ */
+export async function loginAsDev(page: Page, name: string, expectedUrl: RegExp) {
+  await page.goto("/entrar");
+  const section = page.locator("details").filter({ hasText: "só em desenvolvimento" });
+  await expect(section).toBeVisible();
+  await section.locator("summary").click();
+  await page.getByRole("button", { name: `Entrar como ${name}` }).click();
+  await expect(page).toHaveURL(expectedUrl);
+}
+
 /** Garante que a página não cria rolagem horizontal (mobile/tablet). */
 export async function expectNoHorizontalOverflow(page: Page) {
   await page.waitForLoadState("load");

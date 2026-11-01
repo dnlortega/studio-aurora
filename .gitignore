@@ -42,7 +42,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# banco local (PGlite) e artefatos de teste
+# artefatos locais: backups dos scripts, pastas do antigo banco embutido
+# (desnecessárias — o projeto só usa o PostgreSQL da Neon), capturas e relatórios
 /.data
 /test-results
 /playwright-report

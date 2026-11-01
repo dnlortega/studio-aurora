@@ -143,16 +143,17 @@ describe("buildStatusSections", () => {
     ]);
   });
 
-  it("marca o banco embutido como atenção, não como ok", () => {
+  it("identifica o PostgreSQL gerenciado e mantém os avisos de ambiente", () => {
     const sections = buildStatusSections(
       baseInput({
         nodeEnv: "development",
         database: {
           connected: true,
           latencyMs: 3,
-          driver: "pglite",
-          target: "/tmp/.data/pglite",
-          autoMigrate: true,
+          driver: "postgres",
+          target:
+            "ep-quiet-dew-b6kdmaop-pooler.c-2.sa-east-1.aws.neon.tech:5432/neondb",
+          autoMigrate: false,
           migrationsApplied: 1,
           tables: { users: 1, services: 6, appointments: 0 },
         },
@@ -169,7 +170,7 @@ describe("buildStatusSections", () => {
           authSecret: true,
           resendApiKey: false,
           emailFrom: false,
-          databaseUrl: false,
+          databaseUrl: true,
         },
       }),
     );
@@ -177,8 +178,9 @@ describe("buildStatusSections", () => {
     const motor = sections
       .find((section) => section.id === "banco")!
       .items.find((item) => item.label === "Motor");
-    expect(motor?.tone).toBe("warn");
-    expect(motor?.value).toContain("PGlite");
+    expect(motor?.tone).toBe("ok");
+    expect(motor?.value).toContain("Neon");
+    expect(motor?.value).not.toContain("PGlite");
 
     const origem = sections.find((section) => section.id === "repositorio")!
       .items[0];

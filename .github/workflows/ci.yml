@@ -2,10 +2,15 @@
 #
 # Dois jobs independentes:
 #   qualidade → tipos, lint, testes unitários/de integração e build de produção
-#   e2e       → Playwright contra `next dev` com PGlite isolado (.data/e2e)
+#   e2e       → Playwright contra `next dev` com o banco Neon `aurora_e2e`
 #
-# Nenhum segredo real é necessário: os testes usam banco embutido e o
-# `AUTH_SECRET` abaixo é um valor fictício, só para a derivação de sessão rodar.
+# Não existe banco local: os dois jobs falam com o PostgreSQL da Neon e por isso
+# exigem o segredo `DATABASE_URL` do repositório (a mesma URL do .env.local).
+# Os testes escrevem apenas nos bancos separados `aurora_test` e `aurora_e2e`,
+# criados e zerados pelos scripts — nunca no banco do salão. Sem o segredo, o
+# workflow falha logo no primeiro passo em vez de pular testes e dar verde.
+#
+# O `AUTH_SECRET` abaixo é fictício, só para a derivação de sessão funcionar.
 name: CI
 
 on:
@@ -22,13 +27,20 @@ jobs:
   qualidade:
     name: Types, lint, testes e build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
       AUTH_SECRET: ci-only-secret-0000000000000000000000000000000000000000000000000000
-      DATABASE_URL: ""
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
       NEXT_PUBLIC_APP_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
+
+      - name: Exigir o banco Neon (segredo DATABASE_URL)
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Segredo DATABASE_URL ausente. Configure o segredo com a URL do PostgreSQL da Neon (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
 
       - uses: actions/setup-node@v4
         with:
@@ -62,9 +74,18 @@ jobs:
   e2e:
     name: Playwright (ponta a ponta)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Exigir o banco Neon (segredo DATABASE_URL)
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Segredo DATABASE_URL ausente. Os testes E2E rodam no banco Neon aurora_e2e e não têm fallback local."
+            exit 1
+          fi
 
       - uses: actions/setup-node@v4
         with:
