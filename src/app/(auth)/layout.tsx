@@ -32,7 +32,7 @@ export default async function AuthLayout({
           <div className="max-w-md space-y-7">
             <span className="block h-px w-16 bg-white/30" />
             <blockquote className="font-heading text-4xl leading-[1.15] text-balance xl:text-[2.7rem]">
-              “Cuidar de você é o nosso jeito de fazer beleza.”
+              “Suas unhas cuidadas com o tempo que elas pedem.”
             </blockquote>
             <p className="max-w-sm text-sm leading-relaxed text-white/70">
               Agenda organizada, atendimento sem pressa e um espaço pensado

@@ -292,7 +292,7 @@ export function buildStatusSections(input: StatusInput): StatusSection[] {
       tone: input.secrets.databaseUrl ? "ok" : "warn",
       detail: input.secrets.databaseUrl
         ? "o app usa o PostgreSQL externo"
-        : "sem DATABASE_URL o app cai no banco embutido (só desenvolvimento)",
+        : "não existe banco local: sem DATABASE_URL o app não sobe",
     },
     {
       label: "E-mail (Resend)",
@@ -304,10 +304,10 @@ export function buildStatusSections(input: StatusInput): StatusSection[] {
     },
     {
       label: "WhatsApp",
-      value: "não integrado",
+      value: "sem envio automático",
       tone: "warn",
       detail:
-        "o módulo registra a tentativa como não configurada; nenhuma mensagem é enviada nem simulada",
+        "o painel abre um link wa.me com o lembrete pronto para o admin enviar; nada sai do servidor e nada é registrado como mensagem enviada",
     },
   ];
 

@@ -29,8 +29,10 @@ type NotifyInput = {
  * Registra e tenta entregar a notificação do evento.
  *
  * - E-mail: enviado se RESEND_API_KEY estiver configurada.
- * - WhatsApp: canal ainda não integrado; fica registrado como `not_configured`
- *   (nunca marcamos como enviado algo que não saiu).
+ * - WhatsApp: canal automático ainda não integrado; fica registrado como
+ *   `not_configured` (nunca marcamos como enviado algo que não saiu). O
+ *   lembrete que o admin dispara na "Sua agenda" é manual — abre um link wa.me
+ *   com a mensagem pronta (`src/lib/booking/reminder.ts`) e não passa por aqui.
  *
  * Falhas de notificação jamais desfazem a reserva já confirmada.
  */

@@ -90,7 +90,6 @@ async function uniqueSlug(name: string, ignoreId?: string) {
 function revalidateCatalog() {
   revalidatePath("/");
   revalidatePath("/servicos");
-  revalidatePath("/agendar");
   revalidatePath("/admin");
   revalidatePath("/admin/servicos");
   revalidatePath("/admin/agenda");
@@ -271,7 +270,6 @@ export async function updateBusinessHoursAction(
   });
 
   revalidatePath("/admin/horarios");
-  revalidatePath("/agendar");
   revalidatePath("/");
   return ok("Horários atualizados.");
 }
@@ -329,7 +327,7 @@ export async function createBlockAction(
 
   revalidatePath("/admin/bloqueios");
   revalidatePath("/admin/agenda");
-  revalidatePath("/agendar");
+  revalidatePath("/");
   return ok("Bloqueio criado.");
 }
 
@@ -348,7 +346,7 @@ export async function deleteBlockAction(id: string): Promise<ActionResult> {
 
   revalidatePath("/admin/bloqueios");
   revalidatePath("/admin/agenda");
-  revalidatePath("/agendar");
+  revalidatePath("/");
   return ok("Bloqueio removido.");
 }
 
@@ -393,7 +391,6 @@ export async function updateSettingsAction(
 
   revalidatePath("/");
   revalidatePath("/servicos");
-  revalidatePath("/agendar");
   revalidatePath("/admin");
   revalidatePath("/admin/configuracoes");
   return ok("Configurações salvas.");

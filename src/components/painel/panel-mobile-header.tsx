@@ -25,7 +25,7 @@ export function PanelMobileHeader({
       <Logo name={salonName} href="/painel" />
 
       <div className="flex items-center gap-2">
-        <IconLink href="/agendar" label="Agendar" size="icon-sm">
+        <IconLink href="/" label="Agendar" size="icon-sm">
           <CalendarPlus className="size-4" />
         </IconLink>
         <Avatar className="size-8">

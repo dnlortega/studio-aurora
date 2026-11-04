@@ -29,7 +29,7 @@ import type { AppointmentDetail } from "@/lib/booking/queries";
 import {
   formatCurrency,
   formatDateTime,
-  formatDayLong,
+  formatDayNumeric,
   formatDuration,
   formatMinuteRange,
   formatPhoneInput,
@@ -124,8 +124,8 @@ export function AppointmentDetailCard({
                   <CalendarDays className="size-3" />
                   Data
                 </p>
-                <p className="mt-1 text-sm font-medium first-letter:uppercase">
-                  {formatDayLong(appointment.startsOn)}
+                <p className="mt-1 text-sm font-medium">
+                  {formatDayNumeric(appointment.startsOn)}
                 </p>
               </div>
               <div className="rounded-lg bg-muted/40 p-3">

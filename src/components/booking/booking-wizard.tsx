@@ -1,7 +1,8 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ptBR } from "react-day-picker/locale";
 import {
   ArrowLeft,
@@ -44,7 +45,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { renderServiceIcon } from "@/components/shared/service-icon";
 import {
   formatCurrency,
-  formatDayLong,
+  formatDayNumeric,
   formatDuration,
   formatMinuteRange,
   minutesToTime,
@@ -81,6 +82,13 @@ type WizardProps = {
   user: { name: string; email: string } | null;
   initialServiceIds: string[];
   reschedule?: RescheduleInfo;
+  /**
+   * Renderado pelo servidor embaixo do resumo (expediente, endereço,
+   * WhatsApp). Server Components atravessam a fronteira como `children` —
+   * passá-las por outra prop daria "Functions cannot be passed directly to
+   * Client Components".
+   */
+  children?: ReactNode;
 };
 
 type DayInfo = { available: boolean; reason: string };
@@ -120,8 +128,13 @@ export function BookingWizard({
   user,
   initialServiceIds,
   reschedule,
+  children,
 }: WizardProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  /** O login devolve a cliente para a tela em que ela estava. */
+  const loginHref = `/entrar?next=${encodeURIComponent(pathname)}`;
+  const signupHref = `/criar-conta?next=${encodeURIComponent(pathname)}`;
   const isReschedule = Boolean(reschedule);
   const [step, setStep] = useState(isReschedule ? 2 : 1);
   const [selectedIds, setSelectedIds] = useState<string[]>(
@@ -228,7 +241,7 @@ export function BookingWizard({
     setMonthError(null);
     fetch(
       `/api/disponibilidade?mes=${month}&servicos=${selectedIds.join(",")}`,
-      { signal: controller.signal },
+      { cache: "no-store", signal: controller.signal },
     )
       .then(async (response) => {
         const data = await response.json();
@@ -251,7 +264,10 @@ export function BookingWizard({
       slotsLoadedFor.current = key;
       setSlotsLoading(true);
       setSlotsError(null);
-      fetch(`/api/disponibilidade?data=${targetDay}&servicos=${selectedIds.join(",")}`)
+      fetch(
+        `/api/disponibilidade?data=${targetDay}&servicos=${selectedIds.join(",")}`,
+        { cache: "no-store" },
+      )
         .then(async (response) => {
           const data = await response.json();
           if (!response.ok) throw new Error(data.error ?? "Erro ao consultar");
@@ -404,18 +420,6 @@ export function BookingWizard({
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
       <div className="min-w-0 space-y-7">
-        <div className="space-y-2">
-          <p className="eyebrow">{isReschedule ? "Reagendar" : "Agendamento online"}</p>
-          <h1 className="text-3xl font-medium text-balance sm:text-4xl">
-            {isReschedule ? "Escolha o novo horário" : "Vamos montar o seu horário"}
-          </h1>
-          <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground text-pretty">
-            {isReschedule
-              ? "Seus serviços continuam os mesmos. Escolha uma nova data e horário disponíveis."
-              : "Escolha os serviços, veja os horários realmente livres e confirme. Você pode combinar mais de um serviço no mesmo atendimento."}
-          </p>
-        </div>
-
         <Stepper current={step} />
 
         {step === 1 ? (
@@ -481,7 +485,7 @@ export function BookingWizard({
                       <p className="mt-3 text-sm font-medium">{service.name}</p>
                       <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-muted-foreground">
                         {service.description ??
-                          "Cuidado personalizado para realçar a sua beleza."}
+                          "Cuidado com as suas unhas, do começo ao fim."}
                       </p>
                       <span className="mt-3 inline-flex items-center gap-1 text-[0.68rem] uppercase tracking-wider text-muted-foreground">
                         <Clock3 className="size-3" />
@@ -585,8 +589,8 @@ export function BookingWizard({
               {day ? (
                 <p className="text-xs text-muted-foreground">
                   Selecionado:{" "}
-                  <span className="font-medium text-foreground first-letter:uppercase">
-                    {formatDayLong(day)}
+                  <span className="font-medium text-foreground">
+                    {formatDayNumeric(day)}
                   </span>
                 </p>
               ) : null}
@@ -599,8 +603,8 @@ export function BookingWizard({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-medium">Horários disponíveis</h2>
-                <p className="text-xs first-letter:uppercase text-muted-foreground">
-                  {day ? formatDayLong(day) : ""} · atendimento de{" "}
+                <p className="text-xs text-muted-foreground">
+                  {day ? formatDayNumeric(day) : ""} · atendimento de{" "}
                   {formatDuration(totalDuration)}
                 </p>
               </div>
@@ -696,8 +700,8 @@ export function BookingWizard({
                     <CalendarCheck2 className="size-5" />
                   </span>
                   <div>
-                    <p className="text-sm font-medium first-letter:uppercase">
-                      {formatDayLong(day)}
+                    <p className="text-sm font-medium">
+                      {formatDayNumeric(day)}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {formatMinuteRange(minute, minute + totalDuration)} ·{" "}
@@ -816,11 +820,11 @@ export function BookingWizard({
                       etapa depois do login.
                     </p>
                     <div className="flex gap-2">
-                      <IconLink href="/entrar?next=/agendar" label="Entrar">
+                      <IconLink href={loginHref} label="Entrar">
                         <LogIn className="size-4" />
                       </IconLink>
                       <IconLink
-                        href="/criar-conta?next=/agendar"
+                        href={signupHref}
                         label="Criar conta"
                         variant="outline"
                       >
@@ -845,7 +849,7 @@ export function BookingWizard({
         ) : null}
       </div>
 
-      <aside className="lg:sticky lg:top-24">
+      <aside className="space-y-4 lg:sticky lg:top-24">
         <Card className="border-border/80 bg-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-medium">Resumo</CardTitle>
@@ -894,7 +898,7 @@ export function BookingWizard({
 
             {day && minute !== null ? (
               <div className="rounded-lg bg-secondary/50 p-3 text-xs">
-                <p className="font-medium first-letter:uppercase">{formatDayLong(day)}</p>
+                <p className="font-medium">{formatDayNumeric(day)}</p>
                 <p className="mt-0.5 text-muted-foreground">
                   {minutesToTime(minute)} · {formatDuration(totalDuration)}
                 </p>
@@ -934,6 +938,8 @@ export function BookingWizard({
             ) : null}
           </CardContent>
         </Card>
+
+        {children}
       </aside>
     </div>
   );
@@ -1065,7 +1071,7 @@ function SuccessPanel({
               <CalendarDays className="size-5" />
             </span>
             <div>
-              <p className="text-sm font-medium first-letter:uppercase">{formatDayLong(day)}</p>
+              <p className="text-sm font-medium">{formatDayNumeric(day)}</p>
               <p className="text-sm text-muted-foreground">
                 {formatMinuteRange(minute, minute + durationMin)} ·{" "}
                 {formatDuration(durationMin)}

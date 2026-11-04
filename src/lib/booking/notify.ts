@@ -8,7 +8,7 @@ import {
 } from "@/lib/booking/service";
 import {
   formatCurrency,
-  formatDayLong,
+  formatDayNumeric,
   formatMinuteRange,
 } from "@/lib/dates";
 import {
@@ -55,7 +55,7 @@ export async function sendAppointmentEmail(
     };
 
     const subject = `${titles[type]} — ${settings.salonName}`;
-    const summary = `${titles[type]} para ${formatDayLong(
+    const summary = `${titles[type]} para ${formatDayNumeric(
       appointment.startsOn,
     )}, ${formatMinuteRange(appointment.startMinute, appointment.endMinute)}.`;
     const footer =
@@ -67,7 +67,7 @@ export async function sendAppointmentEmail(
       salonName: settings.salonName,
       clientName: client.name,
       title: titles[type],
-      dateLabel: formatDayLong(appointment.startsOn),
+      dateLabel: formatDayNumeric(appointment.startsOn),
       timeLabel: formatMinuteRange(
         appointment.startMinute,
         appointment.endMinute,

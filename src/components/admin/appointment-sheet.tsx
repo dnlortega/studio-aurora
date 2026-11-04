@@ -34,7 +34,7 @@ export function AppointmentSheet({
       >
         <SheetHeader className="border-b border-border/70 px-5 py-4">
           <SheetTitle>Detalhes do agendamento</SheetTitle>
-          <SheetDescription className="first-letter:uppercase">
+          <SheetDescription className="tabular-nums">
             {dayLabel}
           </SheetDescription>
         </SheetHeader>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Studio Aurora">
+  <rect width="64" height="64" rx="16" fill="#f7efe4" />
+  <path
+    d="M32 14 45.5 50h-8.1l-2.6-7.1H25.2L22.6 50h-8.1L32 14Zm0 13.6-3 8.2h6l-3-8.2Z"
+    fill="#8c4a35"
+  />
+  <path
+    d="M50.6 12.4c.5 3.3 1.5 4.9 3.4 5.7-1.9.8-2.9 2.4-3.4 5.7-.5-3.3-1.5-4.9-3.4-5.7 1.9-.8 2.9-2.4 3.4-5.7Z"
+    fill="#c9714f"
+  />
+</svg>

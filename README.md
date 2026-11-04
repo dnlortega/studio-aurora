@@ -1,9 +1,9 @@
 # Studio Aurora
 
-Sistema de agendamento para salão de beleza com um profissional, duas áreas
-(site público + painel da cliente + administração) e regras de agenda reais:
-disponibilidade calculada, bloqueios, intervalos, regras de antecedência,
-cancelamento e remarcação, histórico e relatórios.
+Sistema de agendamento para um estúdio de manicure (unhas) com um profissional,
+três áreas (site público + painel da cliente + administração) e regras de agenda
+reais: disponibilidade calculada, bloqueios, intervalos, regras de antecedência,
+cancelamento e remarcação, lembrete por WhatsApp, histórico e relatórios.
 
 > **Autor:** Daniel Ortega Pereira · [github.com/dnlortega](https://github.com/dnlortega) · dnlortega@gmail.com
 
@@ -34,9 +34,11 @@ cancelamento e remarcação, histórico e relatórios.
 
 **Site público**
 
-- Home com serviços em destaque, próximo horário livre e informações do salão.
-- Catálogo com preço, duração e descrição.
-- Agendamento em 5 etapas: serviços → data → horário real → revisão → confirmação.
+- `/` é a própria tela de agendamento — não existe página de marketing.
+- `/agendar` continua no ar como atalho da mesma tela (canonical aponta para `/`).
+- Catálogo de unhas (manicure, pedicure e gel) com preço, duração e descrição.
+- Agendamento em 4 etapas: serviços → data → horário real → confirmação.
+- Datas sempre exibidas como dd/mm/aaaa.
 - Login/cadastro no meio do fluxo sem perder a seleção.
 - Recuperação e redefinição de senha por link com token de uso único.
 
@@ -54,6 +56,10 @@ cancelamento e remarcação, histórico e relatórios.
 - Agenda por dia, semana e mês, com filtros por status, serviço e período.
 - Lista de agendamentos com busca, status rápido e exportação CSV autorizada.
 - Criação manual de agendamento, remarcação, cancelamento e mudança de status.
+- Lembrete por WhatsApp na agenda, na lista e na ficha do agendamento: o botão
+  abre o WhatsApp da cliente com a mensagem pronta (nome, data dd/mm/aaaa, hora
+  marcada, serviços e valor). Nada é enviado pelo servidor e nada é registrado
+  como "mensagem enviada" — a envio acontece no app/Web WhatsApp do salão.
 - Serviços: criar, editar, ativar/desativar e **excluir definitivamente**.
 - Clientes: cadastro, edição, ativação e histórico.
 - Horários de funcionamento, intervalos, bloqueios e folgas.
@@ -150,7 +156,16 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 ```bash
 npm run db:migrate    # aplica as migrações Drizzle no banco do DATABASE_URL
 npm run db:seed       # catálogo + configurações + admin demo (se SEED_ADMIN_* definido)
+npm run db:sync-catalog -- --dry-run  # mostra o que mudaria no cardápio de unhas
+npm run db:sync-catalog               # aplica: remove serviços fora do cardápio
 ```
+
+`db:sync-catalog` é o caminho seguro para trocar o cardápio de um banco que já
+tem dados: ele apaga os serviços que saíram do menu, mantém os textos que
+você editou no painel e nunca toca no histórico — cada item de agendamento
+guarda nome, preço e duração do momento da reserva (`appointment_items`).
+Depois de alinhar, rode `npm run db:seed` para recriar os agendamentos de
+demonstração com o cardápio novo.
 
 ### Produção (Neon)
 
@@ -211,6 +226,7 @@ definidos — nunca use essas credenciais em produção.
 | `npm run db:migrate` | Aplica migrações |
 | `npm run db:migrate:legacy` | Migra dados do banco antigo |
 | `npm run db:seed` | Catálogo/configurações/admin demo |
+| `npm run db:sync-catalog` | Alinha o banco ao cardápio de unhas (aceita `--dry-run`) |
 | `npm run admin:create` | Cria administrador com senha segura |
 | `npm run db:reset:e2e` | Zera e re-migra o banco Neon `aurora_e2e` |
 
@@ -336,8 +352,10 @@ instância serverless fala com o mesmo PostgreSQL da Neon.
 
 ### Limitações conhecidas
 
-- **WhatsApp ainda não integrado.** O módulo existe e registra a tentativa como
-  `not_configured`; nenhuma mensagem é simulada como enviada.
+- **WhatsApp sem envio automático.** O módulo de notações registra a tentativa
+  como `not_configured`; nenhuma mensagem é simulada como enviada. O lembrete
+  do painel é manual: abre um link `wa.me` com a mensagem pronta e é o admin que
+  envia na conversa.
 - **E-mail** só funciona com `RESEND_API_KEY`. Sem ela, em produção não há
   envio de link de redefinição (em dev o link é exibido na tela).
 - **Pagamentos** registram apenas pago/não pago e data — sem forma de pagamento
@@ -364,6 +382,11 @@ instância serverless fala com o mesmo PostgreSQL da Neon.
 - Tokens de redefinição com hash, expiração de 1 hora e uso único.
 - Credenciais nunca vão para a URL: os formulários de acesso usam server actions
   e nascem como `POST` no HTML, funcionando igual sem JavaScript.
+- Os esqueletos de carregamento ficam em `(site)/`, `admin/` e `painel/`, e não
+  na raiz do app. Um `loading.tsx` na raiz cria borda de Suspense em toda rota:
+  o React manda o conteúdo suspenso dentro de `<div hidden>` e quem revela é um
+  script — sem JavaScript a pessoa ficaria olhando o esqueleto e não conseguiria
+  nem entrar na conta.
 - `/admin/status` é só para administrador e mostra no máximo a *presença* das
   chaves; mensagens de erro do driver são redigidas antes de aparecer na tela.
 - A lista de contas cadastradas na tela de acesso existe apenas em `development`
@@ -389,7 +412,7 @@ instância serverless fala com o mesmo PostgreSQL da Neon.
 src/
   actions/            Server Actions (auth, booking, admin)
   app/
-    (site)/           Home, catálogo, agendamento
+    (site)/           Agendamento (raiz), atalho /agendar e catálogo
     (auth)/           Entrar, criar conta, recuperar/redefinir senha
     painel/           Área da cliente
     admin/            Administração

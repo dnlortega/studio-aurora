@@ -35,7 +35,7 @@ import {
   daysBetween,
   formatCurrency,
   formatDuration,
-  formatFullDate,
+  formatDayNumeric,
   formatMinuteRange,
   getSalonNow,
 } from "@/lib/dates";
@@ -115,7 +115,7 @@ export default async function AppointmentDetailPage({
     .map((item) => activeServices.find((service) => service.id === item.serviceId)?.slug)
     .filter((slug): slug is string => Boolean(slug));
   const rebookHref =
-    rebookSlugs.length > 0 ? `/agendar?servico=${rebookSlugs.join(",")}` : "/agendar";
+    rebookSlugs.length > 0 ? `/?servico=${rebookSlugs.join(",")}` : "/";
 
   const dateTime = new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "short",
@@ -140,8 +140,8 @@ export default async function AppointmentDetailPage({
 
       <div className="space-y-1.5">
         <p className="eyebrow">Detalhes do atendimento</p>
-        <h1 className="text-2xl font-medium first-letter:uppercase tracking-tight sm:text-3xl">
-          {formatFullDate(appointment.startsOn)}
+        <h1 className="text-2xl font-medium tracking-tight sm:text-3xl">
+          {formatDayNumeric(appointment.startsOn)}
         </h1>
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1.5 tabular-nums">

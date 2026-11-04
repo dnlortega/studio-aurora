@@ -18,16 +18,13 @@ export async function SiteFooter() {
   const whatsappDigits = settings.whatsapp?.replace(/\D/g, "");
 
   return (
-    <footer
-      id="contato"
-      className="mt-20 border-t border-border/70 bg-secondary/40"
-    >
+    <footer className="mt-20 border-t border-border/70 bg-secondary/40">
       <div className="container-page grid gap-10 py-12 md:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-4">
           <Logo name={settings.salonName} />
           <p className="max-w-xs text-sm leading-relaxed text-muted-foreground text-pretty">
             {settings.description ??
-              "Um espaço de beleza pensado para cuidar de você com calma, técnica e atenção aos detalhes."}
+              "Um estúdio de unhas pensado para cuidar de você com calma, técnica e atenção aos detalhes."}
           </p>
           {settings.instagram ? (
             <a
@@ -45,11 +42,11 @@ export async function SiteFooter() {
         <div className="space-y-3">
           <p className="eyebrow">Navegue</p>
           <nav className="flex flex-col gap-2 text-sm">
+            <Link href="/" className="text-muted-foreground hover:text-foreground">
+              Agendar horário
+            </Link>
             <Link href="/servicos" className="text-muted-foreground hover:text-foreground">
               Serviços e preços
-            </Link>
-            <Link href="/agendar" className="text-muted-foreground hover:text-foreground">
-              Agendar horário
             </Link>
             <Link href="/painel" className="text-muted-foreground hover:text-foreground">
               Meus agendamentos
@@ -140,7 +137,7 @@ export async function SiteFooter() {
             reservados.
           </p>
           <div className="flex items-center gap-4">
-            <Link href="/agendar" className="hover:text-foreground">
+            <Link href="/" className="hover:text-foreground">
               Agendamento online
             </Link>
             <Link href="/admin" className="hover:text-foreground">

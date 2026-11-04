@@ -39,7 +39,9 @@ import {
 } from "@/lib/booking/queries";
 import {
   formatCurrency,
+  formatDateInZone,
   formatDateTime,
+  formatDayNumeric,
   formatMinuteRange,
   formatPhoneInput,
 } from "@/lib/dates";
@@ -67,10 +69,10 @@ export default async function AdminClientPage({
       <PageHeader
         eyebrow="Ficha da cliente"
         title={client.name}
-        description={`${client.email} · cliente desde ${new Intl.DateTimeFormat(
-          "pt-BR",
-          { dateStyle: "long", timeZone: settings.timezone },
-        ).format(client.createdAt)}`}
+        description={`${client.email} · cliente desde ${formatDateInZone(
+          client.createdAt,
+          settings.timezone,
+        )}`}
         actions={
           <>
             <IconLink href="/admin/clientes" label="Voltar" variant="outline">
@@ -135,13 +137,7 @@ export default async function AdminClientPage({
               Última visita
             </p>
             <p className="font-heading text-2xl">
-              {stats.lastVisit
-                ? new Intl.DateTimeFormat("pt-BR", {
-                    day: "2-digit",
-                    month: "short",
-                    timeZone: "UTC",
-                  }).format(new Date(`${stats.lastVisit}T12:00:00.000Z`))
-                : "—"}
+              {stats.lastVisit ? formatDayNumeric(stats.lastVisit) : "—"}
             </p>
             <p className="text-xs text-muted-foreground">
               {stats.lastVisit ? "atendimento concluído" : "sem atendimentos"}
@@ -243,13 +239,8 @@ export default async function AdminClientPage({
                       {appointments.map((appointment) => (
                         <TableRow key={appointment.id}>
                           <TableCell className="pl-0">
-                            <p className="text-sm first-letter:uppercase">
-                              {new Intl.DateTimeFormat("pt-BR", {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                                timeZone: "UTC",
-                              }).format(new Date(`${appointment.startsOn}T12:00:00.000Z`))}
+                            <p className="text-sm tabular-nums">
+                              {formatDayNumeric(appointment.startsOn)}
                             </p>
                             <p className="text-xs text-muted-foreground tabular-nums">
                               {formatMinuteRange(
@@ -298,12 +289,8 @@ export default async function AdminClientPage({
                       className="block rounded-lg border border-border/70 p-2.5 text-sm transition-colors hover:border-primary/40"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <span className="first-letter:uppercase">
-                          {new Intl.DateTimeFormat("pt-BR", {
-                            day: "2-digit",
-                            month: "short",
-                            timeZone: "UTC",
-                          }).format(new Date(`${appointment.startsOn}T12:00:00.000Z`))}{" "}
+                        <span className="tabular-nums">
+                          {formatDayNumeric(appointment.startsOn)}{" "}
                           · {formatMinuteRange(appointment.startMinute, appointment.endMinute)}
                         </span>
                         <StatusBadge status={appointment.status} />

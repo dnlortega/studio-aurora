@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -38,6 +37,13 @@ export function ServiceCard({
             loading="lazy"
             className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
+          <Badge
+            variant="outline"
+            className="absolute right-3 bottom-3 gap-1 bg-card/85 text-xs backdrop-blur"
+          >
+            <Clock3 className="size-3" />
+            {formatDuration(service.durationMin)}
+          </Badge>
         </div>
       ) : (
         <div className="relative flex h-20 items-end justify-between overflow-hidden bg-gradient-to-br from-secondary via-background to-accent/40 px-5">
@@ -57,41 +63,32 @@ export function ServiceCard({
         <CardTitle className="text-lg font-medium">{service.name}</CardTitle>
         <CardDescription className="line-clamp-3 text-sm leading-relaxed">
           {service.description ??
-            "Um cuidado pensado para realçar a sua beleza natural."}
+            "Cuidado com as suas unhas, do começo ao fim."}
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="mt-auto pb-0">
+      <CardContent className="mt-auto pb-4">
         <div className="flex items-end justify-between gap-3 border-t border-border/70 pt-4">
           <div>
             <p className="text-[0.65rem] uppercase tracking-wider text-muted-foreground">
               A partir de
             </p>
-            <p className="font-heading text-xl font-medium">
+            <p className="font-heading text-xl">
               {formatCurrency(service.priceCents)}
             </p>
           </div>
-          {service.imageUrl ? (
-            <Badge variant="outline" className="gap-1 text-xs">
-              <Clock3 className="size-3" />
-              {formatDuration(service.durationMin)}
-            </Badge>
-          ) : null}
+          <IconLink
+            href={`/?servico=${service.slug}`}
+            label={`Agendar ${service.name}`}
+            variant="outline"
+            size="icon-sm"
+            className="text-primary"
+            tooltipSide="left"
+          >
+            <CalendarDays className="size-3.5" />
+          </IconLink>
         </div>
       </CardContent>
-
-      <CardFooter className="justify-end pb-4">
-        <IconLink
-          href={`/agendar?servico=${service.slug}`}
-          label="Agendar"
-          variant="ghost"
-          size="icon-sm"
-          className="text-primary hover:bg-transparent hover:text-primary/80"
-          tooltipSide="left"
-        >
-          <CalendarDays className="size-3.5" />
-        </IconLink>
-      </CardFooter>
     </Card>
   );
 }

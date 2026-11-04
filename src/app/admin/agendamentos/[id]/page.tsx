@@ -2,10 +2,14 @@ import { ArrowLeft, CalendarPlus } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { AppointmentDetailCard } from "@/components/admin/appointment-detail";
+import {
+  MissingPhoneHint,
+  WhatsAppReminderLink,
+} from "@/components/admin/whatsapp-reminder-link";
 import { IconLink } from "@/components/shared/icon-button";
 import { PageHeader } from "@/components/shared/page-header";
 import { getAdminAppointmentDetail } from "@/lib/booking/queries";
-import { formatDayLong, getSalonNow } from "@/lib/dates";
+import { formatDayNumeric, getSalonNow } from "@/lib/dates";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getSettings } from "@/lib/settings";
 
@@ -30,11 +34,20 @@ export default async function AdminAppointmentPage({
       <PageHeader
         eyebrow="Agendamento"
         title={appointment.clientName}
-        description={`${formatDayLong(appointment.startsOn)} · ${appointment.items
+        description={`${formatDayNumeric(appointment.startsOn)} · ${appointment.items
           .map((item) => item.serviceName)
           .join(" + ")}`}
         actions={
           <>
+            <WhatsAppReminderLink
+              appointment={appointment}
+              salonName={settings.salonName}
+              address={settings.address}
+              size="icon"
+              variant="outline"
+              tooltipSide="bottom"
+              fallback={<MissingPhoneHint name={appointment.clientName} />}
+            />
             <IconLink
               href="/admin/agendamentos"
               label="Voltar à lista"

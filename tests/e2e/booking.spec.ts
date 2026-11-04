@@ -10,7 +10,7 @@ import {
 
 async function chooseServiceAndOpenDay(page: Page, targetDay: string) {
   await page.goto("/agendar");
-  await page.getByRole("button", { name: /Corte autoral/ }).click();
+  await page.getByRole("button", { name: /Manicure & esmaltação/ }).click();
   await page.getByRole("button", { name: "Escolher data" }).click();
 
   const targetMonth = targetDay.slice(0, 7);
@@ -32,8 +32,9 @@ test.describe("agendamento online", () => {
     browser,
   }) => {
     // Três navegadores simultâneos + compilação on-demand das rotas do Next em
-    // dev: o fluxo inteiro passa de 60s com folga, mas o limite padrão não dá.
-    test.setTimeout(180_000);
+    // dev + consultas pela rede ao Neon: o fluxo inteiro passa de 4min, mas o
+    // limite padrão de 180s não dá.
+    test.setTimeout(300_000);
 
     const targetDay = pickOpenDay(3);
     const clientContext = await browser.newContext();
@@ -45,11 +46,12 @@ test.describe("agendamento online", () => {
     await expect(
       clientPage.getByRole("heading", { name: "Confirme os detalhes" }),
     ).toBeVisible();
-    await expect(clientPage.getByText("Corte autoral").first()).toBeVisible();
-    await expect(clientPage.getByText("R$ 140,00").first()).toBeVisible();
+    await expect(clientPage.getByText("Manicure & esmaltação").first()).toBeVisible();
+    await expect(clientPage.getByText("R$ 55,00").first()).toBeVisible();
 
     // 2) Login no meio do fluxo; a seleção é restaurada.
-    await clientPage.locator('a[href="/entrar?next=/agendar"]').click();
+    // O `next` vai codificado (`%2Fagendar`), então ancoramos só no prefixo.
+    await clientPage.locator('a[href^="/entrar?next="]').click();
     await expect(clientPage).toHaveURL(/\/entrar\?next=/);
     await clientPage.locator("#email").fill(E2E_USERS.client.email);
     await clientPage.locator("#password").fill(E2E_USERS.client.password);
@@ -67,12 +69,12 @@ test.describe("agendamento online", () => {
     await expect(
       clientPage.getByRole("heading", { name: "Horário reservado" }),
     ).toBeVisible({ timeout: 20_000 });
-    await expect(clientPage.getByText("Corte autoral").first()).toBeVisible();
+    await expect(clientPage.getByText("Manicure & esmaltação").first()).toBeVisible();
 
     await clientPage.getByRole("link", { name: /Ver agendamento/ }).click();
     await expect(clientPage).toHaveURL(/\/painel\/agendamentos\/[0-9a-f-]+/);
     await expect(clientPage.getByText("16:00", { exact: false }).first()).toBeVisible();
-    await expect(clientPage.getByText("Corte autoral").first()).toBeVisible();
+    await expect(clientPage.getByText("Manicure & esmaltação").first()).toBeVisible();
 
     // 4) O horário deixa de aparecer para outra pessoa (disponibilidade real).
     const otherContext = await browser.newContext();
@@ -96,9 +98,9 @@ test.describe("agendamento online", () => {
     const row = adminPage
       .getByRole("row")
       .filter({ hasText: E2E_USERS.client.name })
-      .filter({ hasText: "Corte autoral" });
+      .filter({ hasText: "Manicure & esmaltação" });
     await expect(row).toBeVisible();
-    await expect(row.getByText("R$ 140,00")).toBeVisible();
+    await expect(row.getByText("R$ 55,00")).toBeVisible();
 
     await row.getByRole("button", { name: "Alterar status" }).click();
     await adminPage
@@ -112,7 +114,7 @@ test.describe("agendamento online", () => {
     await expect(
       adminPage.getByRole("heading", { name: "Detalhes do agendamento" }),
     ).toBeVisible();
-    await expect(adminPage.getByText("Corte autoral").first()).toBeVisible();
+    await expect(adminPage.getByText("Manicure & esmaltação").first()).toBeVisible();
     await expect(adminPage.getByText("Agendamento criado").first()).toBeVisible();
     await expect(adminPage.getByText("Status: Concluído").first()).toBeVisible();
 

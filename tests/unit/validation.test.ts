@@ -87,7 +87,7 @@ describe("bookingSchema / adminBookingSchema", () => {
 describe("serviceSchema", () => {
   it("converte preço e duração e recusa valores fora do limite", () => {
     const parsed = serviceSchema.parse({
-      name: "Corte teste",
+      name: "Manicure teste",
       price: "150.50",
       durationMin: "45",
     });
@@ -97,14 +97,14 @@ describe("serviceSchema", () => {
 
     expect(
       serviceSchema.safeParse({
-        name: "Corte",
+        name: "Manicure",
         price: 10,
         durationMin: 4,
       }).success,
     ).toBe(false);
     expect(
       serviceSchema.safeParse({
-        name: "Corte",
+        name: "Manicure",
         price: -1,
         durationMin: 30,
       }).success,

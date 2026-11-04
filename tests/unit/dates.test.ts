@@ -5,7 +5,9 @@ import {
   daysBetween,
   daysInMonth,
   formatCurrency,
+  formatDateRange,
   formatDateTime,
+  formatDayNumeric,
   formatDuration,
   formatMinuteRange,
   getSalonNow,
@@ -100,6 +102,16 @@ describe("horários e formatação", () => {
   it("formata dinheiro em reais", () => {
     expect(formatCurrency(14000)).toMatch(/140,00/);
     expect(formatCurrency(0)).toMatch(/0,00/);
+  });
+
+  it("mostra qualquer dia de calendário como dd/mm/aaaa", () => {
+    expect(formatDayNumeric("2026-11-04")).toBe("04/11/2026");
+    expect(formatDayNumeric("2026-01-09")).toBe("09/01/2026");
+    expect(formatDayNumeric("2027-12-31")).toBe("31/12/2027");
+    expect(formatDateRange("2026-11-04", "2026-11-04")).toBe("04/11/2026");
+    expect(formatDateRange("2026-11-01", "2026-11-07")).toBe(
+      "01/11/2026 a 07/11/2026",
+    );
   });
 
   it("formata data e hora no fuso do salão", () => {

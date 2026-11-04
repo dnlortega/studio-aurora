@@ -22,8 +22,8 @@ export default async function ServicesPage() {
     <div className="container-page py-12 lg:py-16">
       <div className="max-w-2xl space-y-4">
         <p className="eyebrow">Catálogo</p>
-        <h1 className="text-4xl font-medium text-balance sm:text-5xl">
-          Serviços que cuidam de cada detalhe
+        <h1 className="font-heading text-4xl text-balance sm:text-5xl">
+          Serviços e preços
         </h1>
         <p className="text-base leading-relaxed text-muted-foreground text-pretty">
           Todos os valores e durações já consideram o tempo real de atendimento.
@@ -34,7 +34,7 @@ export default async function ServicesPage() {
           em um mesmo horário e a agenda calcula o total para você.
         </p>
         <div className="flex flex-wrap items-center gap-3 pt-1">
-          <IconLink href="/agendar" label="Agendar horário" size="icon-lg">
+          <IconLink href="/" label="Agendar horário" size="icon-lg">
             <CalendarDays className="size-5" />
           </IconLink>
           <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -69,7 +69,7 @@ export default async function ServicesPage() {
           </p>
         </div>
         <IconLink
-          href="/agendar"
+          href="/"
           label="Ver horários livres"
           variant="outline"
           tooltipSide="left"

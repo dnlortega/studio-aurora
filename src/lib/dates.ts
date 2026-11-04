@@ -110,17 +110,17 @@ export function formatDuration(minutes: number): string {
   return `${hours}h${String(rest).padStart(2, "0")}`;
 }
 
-const dayLongFormatter = new Intl.DateTimeFormat("pt-BR", {
-  weekday: "long",
-  day: "2-digit",
-  month: "long",
-  timeZone: "UTC",
-});
-
 const dayShortFormatter = new Intl.DateTimeFormat("pt-BR", {
   weekday: "short",
   day: "2-digit",
   month: "short",
+  timeZone: "UTC",
+});
+
+const dayNumericFormatter = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
   timeZone: "UTC",
 });
 
@@ -130,18 +130,19 @@ const monthFormatter = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "UTC",
 });
 
-const fullFormatter = new Intl.DateTimeFormat("pt-BR", {
-  weekday: "long",
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
-export function formatDayLong(day: string): string {
-  return dayLongFormatter.format(parseDay(day));
+/**
+ * Formato único de data em exibição: dd/mm/aaaa.
+ *
+ * As telas (site, painel da cliente, painel do salão) e as mensagens enviadas
+ * ao cliente mostram sempre o dia de calendário como "04/11/2026", sem o nome
+ * do dia da semana por extenso. `formatDayShort` continua existindo só para
+ * etiquetas curtas de gráfico e chips, onde o dia da semana é informação útil.
+ */
+export function formatDayNumeric(day: string): string {
+  return dayNumericFormatter.format(parseDay(day));
 }
 
+/** Rótulo curto ("ter., 4 de nov."); usado para dias da semana em chips. */
 export function formatDayShort(day: string): string {
   return dayShortFormatter.format(parseDay(day)).replace(".", "");
 }
@@ -150,13 +151,9 @@ export function formatMonth(month: string): string {
   return monthFormatter.format(parseDay(`${month}-01`));
 }
 
-export function formatFullDate(day: string): string {
-  return fullFormatter.format(parseDay(day));
-}
-
 export function formatDateRange(start: string, end: string): string {
-  if (start === end) return formatDayLong(start);
-  return `${formatDayShort(start)} a ${formatDayShort(end)}`;
+  if (start === end) return formatDayNumeric(start);
+  return `${formatDayNumeric(start)} a ${formatDayNumeric(end)}`;
 }
 
 export function weekdayName(weekday: number): string {
@@ -181,6 +178,17 @@ export function formatDateTime(date: Date, timeZone: string): string {
   return new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "short",
     timeStyle: "short",
+    timeZone,
+  }).format(date);
+}
+
+/**
+ * Só a data de um instante, no formato dd/mm/aaaa usado em toda a exibição.
+ * Para dias de agenda (string YYYY-MM-DD) prefira `formatDayNumeric`.
+ */
+export function formatDateInZone(date: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
     timeZone,
   }).format(date);
 }

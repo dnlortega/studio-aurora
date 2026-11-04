@@ -12,6 +12,10 @@ import { AppointmentDetailCard } from "@/components/admin/appointment-detail";
 import { AppointmentFilters } from "@/components/admin/appointment-filters";
 import { AppointmentSheet } from "@/components/admin/appointment-sheet";
 import { QuickStatus } from "@/components/admin/quick-status";
+import {
+  MissingPhoneHint,
+  WhatsAppReminderLink,
+} from "@/components/admin/whatsapp-reminder-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -33,8 +37,7 @@ import {
 } from "@/lib/booking/queries";
 import {
   formatCurrency,
-  formatDayLong,
-  formatDayShort,
+  formatDayNumeric,
   formatMinuteRange,
   getSalonNow,
   minutesToTime,
@@ -203,8 +206,8 @@ export default async function AdminAppointmentsPage({
                   {result.items.map((appointment) => (
                     <TableRow key={appointment.id}>
                       <TableCell className="pl-4 align-top">
-                        <p className="font-medium first-letter:uppercase">
-                          {formatDayShort(appointment.startsOn)}
+                        <p className="font-medium tabular-nums">
+                          {formatDayNumeric(appointment.startsOn)}
                         </p>
                         <p className="text-xs text-muted-foreground tabular-nums">
                           {formatMinuteRange(
@@ -255,14 +258,25 @@ export default async function AdminAppointmentsPage({
                         />
                       </TableCell>
                       <TableCell className="pr-4 text-right align-top">
-                        <IconLink
-                          href={detailHref(appointment.id)}
-                          label={`Ver detalhes de ${appointment.clientName}`}
-                          variant="ghost"
-                          size="icon-xs"
-                        >
-                          <Eye className="size-3.5" />
-                        </IconLink>
+                        <div className="flex items-center justify-end gap-0.5">
+                          <WhatsAppReminderLink
+                            appointment={appointment}
+                            salonName={settings.salonName}
+                            address={settings.address}
+                            tooltipSide="left"
+                            fallback={
+                              <MissingPhoneHint name={appointment.clientName} />
+                            }
+                          />
+                          <IconLink
+                            href={detailHref(appointment.id)}
+                            label={`Ver detalhes de ${appointment.clientName}`}
+                            variant="ghost"
+                            size="icon-xs"
+                          >
+                            <Eye className="size-3.5" />
+                          </IconLink>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -277,8 +291,8 @@ export default async function AdminAppointmentsPage({
                 <CardContent className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-sm font-medium first-letter:uppercase">
-                        {formatDayLong(appointment.startsOn)}
+                      <p className="text-sm font-medium">
+                        {formatDayNumeric(appointment.startsOn)}
                       </p>
                       <p className="text-xs text-muted-foreground tabular-nums">
                         {minutesToTime(appointment.startMinute)}–
@@ -366,7 +380,7 @@ export default async function AdminAppointmentsPage({
       {detail ? (
         <AppointmentSheet
           closeHref={closeHref}
-          dayLabel={formatDayLong(detail.startsOn)}
+          dayLabel={formatDayNumeric(detail.startsOn)}
         >
           <AppointmentDetailCard
             appointment={detail}

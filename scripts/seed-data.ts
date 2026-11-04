@@ -5,84 +5,75 @@ import type { AppDb } from "@/lib/db";
 import { services, users } from "@/lib/db/schema";
 
 /**
- * Catálogo inicial do Studio Aurora.
- * Estes serviços são conteúdo real de demonstração do salão — podem ser
- * editados/desativados pelo painel administrativo a qualquer momento.
+ * Catálogo do Studio Aurora — só unhas.
+ *
+ * O salão trabalha com manicure, pedicure e alongamento em gel; não há
+ * serviços de cabelo ou maquiagem. Estes registros são conteúdo real de
+ * demonstração e podem ser editados, desativados ou ampliados pelo painel
+ * administrativo a qualquer momento.
  */
 export const CATALOG = [
-  {
-    name: "Corte autoral",
-    slug: "corte-autoral",
-    description:
-      "Corte desenhado para o seu rosto e rotina, com consultoria de estilo e finalização.",
-    priceCents: 14000,
-    durationMin: 60,
-    sortOrder: 1,
-  },
-  {
-    name: "Escova & finalização",
-    slug: "escova-finalizacao",
-    description:
-      "Escova modelada com produtos que respeitam a fibra capilar e prolongam o resultado.",
-    priceCents: 9000,
-    durationMin: 45,
-    sortOrder: 2,
-  },
-  {
-    name: "Coloração & iluminado",
-    slug: "coloracao-iluminado",
-    description:
-      "Cor personalizada, iluminado e correção de tom com diagnóstico capilar antes do processo.",
-    priceCents: 32000,
-    durationMin: 150,
-    sortOrder: 3,
-  },
-  {
-    name: "Hidratação profunda",
-    slug: "hidratacao-profunda",
-    description:
-      "Tratamento intensivo de reconstrução e brilho, indicado para cabelos castigados.",
-    priceCents: 11000,
-    durationMin: 40,
-    sortOrder: 4,
-  },
   {
     name: "Manicure & esmaltação",
     slug: "manicure-esmaltacao",
     description:
-      "Cuidado completo para as mãos, com cutilagem delicada e esmaltação de longa duração.",
+      "Cutilagem, lixamento e esmaltação completa das unhas das mãos.",
     priceCents: 5500,
     durationMin: 40,
-    sortOrder: 5,
+    sortOrder: 1,
   },
   {
-    name: "Design de sobrancelhas",
-    slug: "design-sobrancelhas",
+    name: "Pedicure & esmaltação",
+    slug: "pedicure-esmaltacao",
     description:
-      "Mapeamento facial e design personalizado, com opção de henna e pinça.",
-    priceCents: 6500,
-    durationMin: 30,
-    sortOrder: 6,
+      "Cuidado completo para os pés, com cutilagem, lixamento e esmaltação.",
+    priceCents: 7000,
+    durationMin: 50,
+    sortOrder: 2,
   },
   {
-    name: "Maquiagem social",
-    slug: "maquiagem-social",
+    name: "Unhas em gel",
+    slug: "unhas-em-gel",
     description:
-      "Make de longa duração para eventos, com pele preparada e produtos profissionais.",
-    priceCents: 18000,
-    durationMin: 60,
-    sortOrder: 7,
-  },
-  {
-    name: "Penteado & ocasiões",
-    slug: "penteado-ocasioes",
-    description:
-      "Penteados para casamentos, formaturas e festas, com teste prévio opcional.",
-    priceCents: 16000,
-    durationMin: 60,
-    sortOrder: 8,
+      "Modelagem e banheira de gel com acabamento de longa duração.",
+    priceCents: 12000,
+    durationMin: 80,
+    sortOrder: 3,
   },
 ] as const;
+
+/**
+ * Textos públicos do salão aplicados pelo seed e pelo `db:sync-catalog`.
+ * Só substituem um valor atual quando ele ainda for o texto antigo padrão —
+ * edição feita no painel nunca é sobrescrita.
+ */
+export const STUDIO_PROFILE = {
+  salonName: "Studio Aurora",
+  tagline: "Unhas cuidadas no seu tempo.",
+  description:
+    "Estúdio de manicure em São Paulo. Manicure, pedicure e unhas em gel com material esterilizado, agenda organizada e atendimento individual.",
+  address: "Rua Harmonia, 402 — Vila Madalena, São Paulo/SP",
+  phone: "(11) 3030-1414",
+  whatsapp: "5511930301414",
+  email: "contato@studioaurora.com.br",
+  instagram: "@studioaurora",
+  publicNotice:
+    "Atendimento por hora marcada. Chegue com 10 minutos de antecedência para aproveitar o café da casa.",
+} as const;
+
+/**
+ * Substituições antigas (salão de beleza) que ainda podem estar gravadas no
+ * banco: enquanto o valor for um destes textos, ele é considerado padrão e o
+ * `db:sync-catalog` pode atualizá-lo.
+ */
+export const LEGACY_PROFILE_VALUES: readonly string[] = [
+  "Beleza que respeita o seu tempo.",
+  "Studio de beleza autoral em São Paulo. Cortes, cor, cuidados e ocasiões especiais com agenda organizada e atendimento individual.",
+  "Acreditamos que beleza é presença. Por isso, cada atendimento é reservado com tempo de sobra: para ouvir você, entender o seu dia a dia e criar algo que faça sentido na sua rotina.",
+];
+
+/** Marca os agendamentos criados pelo seed — é o que autoriza a limpeza deles. */
+export const DEMO_NOTES = "Agendamento de demonstração criado pelo seed.";
 
 export async function seedCatalog(db: AppDb): Promise<number> {
   let created = 0;

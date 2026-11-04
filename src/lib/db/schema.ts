@@ -262,7 +262,7 @@ export const settings = pgTable("settings", {
   /** Linha única (id = 1) com a configuração do salão. */
   id: integer("id").primaryKey().default(1),
   salonName: text("salon_name").notNull().default("Studio Aurora"),
-  tagline: text("tagline").notNull().default("Beleza que respeita o seu tempo."),
+  tagline: text("tagline").notNull().default("Unhas cuidadas no seu tempo."),
   description: text("description"),
   address: text("address"),
   phone: text("phone"),

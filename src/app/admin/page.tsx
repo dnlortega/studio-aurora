@@ -16,6 +16,10 @@ import {
 import { DashboardChart } from "@/components/admin/dashboard-chart";
 import { KpiCard } from "@/components/admin/kpi-card";
 import { QuickStatus } from "@/components/admin/quick-status";
+import {
+  MissingPhoneHint,
+  WhatsAppReminderLink,
+} from "@/components/admin/whatsapp-reminder-link";
 import { IconLink } from "@/components/shared/icon-button";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -30,7 +34,7 @@ import { Separator } from "@/components/ui/separator";
 import { getDashboardData } from "@/lib/booking/queries";
 import {
   formatCurrency,
-  formatDayLong,
+  formatDayNumeric,
   formatDuration,
   formatMinuteRange,
   formatMonth,
@@ -55,7 +59,7 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow={formatDayLong(data.now.day)}
+        eyebrow={formatDayNumeric(data.now.day)}
         title={`${greeting}, ${user.name.split(" ")[0]}`}
         description={`Visão geral do ${settings.salonName}. Dados de ${formatMonth(
           data.month.key,
@@ -230,6 +234,14 @@ export default async function AdminDashboardPage() {
                       appointmentId={appointment.id}
                       status={appointment.status}
                       compact
+                    />
+                    <WhatsAppReminderLink
+                      appointment={appointment}
+                      salonName={settings.salonName}
+                      address={settings.address}
+                      fallback={
+                        <MissingPhoneHint name={appointment.clientName} />
+                      }
                     />
                     <Link
                       href={`/admin/agendamentos/${appointment.id}`}

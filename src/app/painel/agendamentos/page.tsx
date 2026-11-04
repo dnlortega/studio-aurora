@@ -85,7 +85,7 @@ export default async function AppointmentsPage({
         title="Meus agendamentos"
         description="Acompanhe seus horários, veja o status de cada reserva e acesse os detalhes para remarcar ou cancelar."
         actions={
-          <IconLink href="/agendar" label="Novo agendamento">
+          <IconLink href="/" label="Novo agendamento">
             <CalendarPlus className="size-4" />
           </IconLink>
         }
@@ -124,7 +124,7 @@ export default async function AppointmentsPage({
           description={emptyCopy.description}
           action={
             filter === "proximos" ? (
-              <IconLink href="/agendar" label="Encontrar um horário">
+              <IconLink href="/" label="Encontrar um horário">
                 <CalendarPlus className="size-4" />
               </IconLink>
             ) : filter === "historico" ? (

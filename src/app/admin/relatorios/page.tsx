@@ -39,7 +39,7 @@ import {
   daysBetween,
   formatCurrency,
   formatDayShort,
-  formatFullDate,
+  formatDayNumeric,
   getSalonNow,
   monthKey,
 } from "@/lib/dates";
@@ -91,7 +91,7 @@ export default async function AdminReportsPage({
       <PageHeader
         eyebrow="Relatórios"
         title="Resultados do período"
-        description={`De ${formatFullDate(from)} a ${formatFullDate(to)} · ${days + 1} dia${
+        description={`De ${formatDayNumeric(from)} a ${formatDayNumeric(to)} · ${days + 1} dia${
           days === 0 ? "" : "s"
         } analisados no fuso ${settings.timezone.replaceAll("_", " ")}.`}
         actions={

@@ -60,7 +60,7 @@ export function AppointmentActions({
     <div className="flex flex-col gap-2 sm:flex-row">
       {canReschedule ? (
         <IconLink
-          href={`/agendar?reagendar=${appointmentId}`}
+          href={`/?reagendar=${appointmentId}`}
           label="Reagendar"
           variant="outline"
         >

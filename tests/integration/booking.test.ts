@@ -55,7 +55,7 @@ async function newBooking(options?: {
   startMinute?: number;
   serviceNames?: string[];
 }) {
-  const names = options?.serviceNames ?? ["Corte autoral"];
+  const names = options?.serviceNames ?? ["Manicure & esmaltação"];
   const ids = names.map((name) => serviceByName(context, name).id);
   return createBooking({
     db: context.db,
@@ -138,25 +138,25 @@ beforeEach(async () => {
 describe("createBooking", () => {
   it("grava o agendamento com snapshot dos serviços, totais e histórico", async () => {
     const appointment = await newBooking({
-      serviceNames: ["Corte autoral", "Hidratação profunda"],
+      serviceNames: ["Manicure & esmaltação", "Unhas em gel"],
     });
 
     expect(appointment.status).toBe("confirmed");
     expect(appointment.startsOn).toBe(bookingDay);
     expect(appointment.startMinute).toBe(600);
-    expect(appointment.endMinute).toBe(700);
-    expect(appointment.totalDurationMin).toBe(100);
-    expect(appointment.totalPriceCents).toBe(25000);
+    expect(appointment.endMinute).toBe(720);
+    expect(appointment.totalDurationMin).toBe(120);
+    expect(appointment.totalPriceCents).toBe(17500);
     expect(appointment.clientId).toBe(context.clientA.id);
     expect(appointment.paymentStatus).toBe("unpaid");
 
     const items = await getAppointmentItems(appointment.id, context.db);
     expect(items.map((item) => item.serviceName)).toEqual([
-      "Corte autoral",
-      "Hidratação profunda",
+      "Manicure & esmaltação",
+      "Unhas em gel",
     ]);
-    expect(items.map((item) => item.priceCents)).toEqual([14000, 11000]);
-    expect(items.map((item) => item.durationMin)).toEqual([60, 40]);
+    expect(items.map((item) => item.priceCents)).toEqual([5500, 12000]);
+    expect(items.map((item) => item.durationMin)).toEqual([40, 80]);
     expect(items.map((item) => item.sortOrder)).toEqual([0, 1]);
 
     const history = await getAppointmentHistory(appointment.id, context.db);
@@ -166,25 +166,25 @@ describe("createBooking", () => {
   });
 
   it("preserva nome e preço originais mesmo após edição do serviço", async () => {
-    const appointment = await newBooking({ serviceNames: ["Corte autoral"] });
-    const service = serviceByName(context, "Corte autoral");
+    const appointment = await newBooking({ serviceNames: ["Manicure & esmaltação"] });
+    const service = serviceByName(context, "Manicure & esmaltação");
 
     await context.db
       .update(services)
-      .set({ name: "Corte novo", priceCents: 99000, durationMin: 15 })
+      .set({ name: "Manicure blindada", priceCents: 99000, durationMin: 15 })
       .where(eq(services.id, service.id));
 
     const detail = await getAdminAppointmentDetail(appointment.id, context.db);
-    expect(detail?.items[0]?.serviceName).toBe("Corte autoral");
-    expect(detail?.items[0]?.priceCents).toBe(14000);
-    expect(detail?.items[0]?.durationMin).toBe(60);
+    expect(detail?.items[0]?.serviceName).toBe("Manicure & esmaltação");
+    expect(detail?.items[0]?.priceCents).toBe(5500);
+    expect(detail?.items[0]?.durationMin).toBe(40);
 
     const stored = await context.db
       .select()
       .from(appointments)
       .where(eq(appointments.id, appointment.id));
-    expect(stored[0]?.totalPriceCents).toBe(14000);
-    expect(stored[0]?.totalDurationMin).toBe(60);
+    expect(stored[0]?.totalPriceCents).toBe(5500);
+    expect(stored[0]?.totalDurationMin).toBe(40);
   });
 
   it("recusa serviço inexistente ou inativo", async () => {
@@ -199,13 +199,13 @@ describe("createBooking", () => {
       }),
     ).rejects.toMatchObject({ code: "service-unavailable" });
 
-    const service = serviceByName(context, "Corte autoral");
+    const service = serviceByName(context, "Manicure & esmaltação");
     await context.db
       .update(services)
       .set({ isActive: false })
       .where(eq(services.id, service.id));
 
-    await expect(newBooking({ serviceNames: ["Corte autoral"] })).rejects.toMatchObject({
+    await expect(newBooking({ serviceNames: ["Manicure & esmaltação"] })).rejects.toMatchObject({
       code: "service-unavailable",
     });
   });
@@ -218,19 +218,25 @@ describe("createBooking", () => {
         clientId: context.clientB.id,
         day: bookingDay,
         startMinute: 600,
-        serviceIds: [serviceByName(context, "Corte autoral").id],
+        serviceIds: [serviceByName(context, "Manicure & esmaltação").id],
       }),
     ).rejects.toMatchObject({ code: "forbidden" });
   });
 
   it("respeita o limite de serviços por agendamento", async () => {
+    // O cardápio tem três serviços; para provar a regra, o limite do salão é
+    // baixado para dois e a reserva pede os três.
+    await context.db
+      .update(settings)
+      .set({ maxServicesPerBooking: 2 })
+      .where(eq(settings.id, 1));
+
     await expect(
       newBooking({
         serviceNames: [
-          "Corte autoral",
-          "Escova & finalização",
-          "Hidratação profunda",
           "Manicure & esmaltação",
+          "Pedicure & esmaltação",
+          "Unhas em gel",
         ],
         startMinute: 9 * 60,
       }),
@@ -252,7 +258,7 @@ describe("createBooking", () => {
       clientId: context.clientB.id,
       day: bookingDay,
       startMinute: 12 * 60,
-      serviceIds: [serviceByName(context, "Corte autoral").id],
+      serviceIds: [serviceByName(context, "Manicure & esmaltação").id],
     });
     expect(adminBooking.status).toBe("confirmed");
   });
@@ -306,7 +312,7 @@ describe("conflitos de horário", () => {
         clientId: context.clientB.id,
         day: bookingDay,
         startMinute: 10 * 60 + 30,
-        serviceIds: [serviceByName(context, "Corte autoral").id],
+        serviceIds: [serviceByName(context, "Manicure & esmaltação").id],
       }),
     ).rejects.toMatchObject({ code: "slot-unavailable" });
 
@@ -316,13 +322,13 @@ describe("conflitos de horário", () => {
       clientId: context.clientB.id,
       day: bookingDay,
       startMinute: 11 * 60,
-      serviceIds: [serviceByName(context, "Corte autoral").id],
+      serviceIds: [serviceByName(context, "Manicure & esmaltação").id],
     });
     expect(backToBack.startMinute).toBe(660);
   });
 
   it("com duas reservas simultâneas, apenas uma é confirmada", async () => {
-    const serviceId = serviceByName(context, "Corte autoral").id;
+    const serviceId = serviceByName(context, "Manicure & esmaltação").id;
     const results = await Promise.allSettled([
       createBooking({
         db: context.db,
@@ -360,7 +366,7 @@ describe("conflitos de horário", () => {
     const availability = await resolveAvailability({
       db: context.db,
       day: bookingDay,
-      serviceIds: [serviceByName(context, "Corte autoral").id],
+      serviceIds: [serviceByName(context, "Manicure & esmaltação").id],
       ignoreAppointmentId: appointment.id,
     });
     expect(availability.slots).toContain(600);
@@ -498,7 +504,7 @@ describe("cancelamento", () => {
     const availability = await resolveAvailability({
       db: context.db,
       day: bookingDay,
-      serviceIds: [serviceByName(context, "Corte autoral").id],
+      serviceIds: [serviceByName(context, "Manicure & esmaltação").id],
     });
     expect(availability.slots).toContain(600);
   });
@@ -518,9 +524,9 @@ describe("reagendamento", () => {
     });
 
     expect(updated.startMinute).toBe(720);
-    expect(updated.endMinute).toBe(780);
+    expect(updated.endMinute).toBe(760);
     expect(updated.status).toBe("confirmed");
-    expect(updated.totalPriceCents).toBe(14000);
+    expect(updated.totalPriceCents).toBe(5500);
 
     const items = await getAppointmentItems(appointment.id, context.db);
     expect(items).toHaveLength(1);
@@ -551,7 +557,7 @@ describe("reagendamento", () => {
 
   it("admin pode trocar serviços, recalculando preço, duração e snapshots", async () => {
     const appointment = await newBooking({ startMinute: 10 * 60 });
-    const design = serviceByName(context, "Design de sobrancelhas");
+    const design = serviceByName(context, "Pedicure & esmaltação");
 
     const updated = await rescheduleBooking({
       db: context.db,
@@ -562,14 +568,14 @@ describe("reagendamento", () => {
       serviceIds: [design.id],
     });
 
-    expect(updated.totalPriceCents).toBe(6500);
-    expect(updated.totalDurationMin).toBe(30);
-    expect(updated.endMinute).toBe(14 * 60 + 30);
+    expect(updated.totalPriceCents).toBe(7000);
+    expect(updated.totalDurationMin).toBe(50);
+    expect(updated.endMinute).toBe(14 * 60 + 50);
 
     const items = await getAppointmentItems(appointment.id, context.db);
     expect(items).toHaveLength(1);
-    expect(items[0]?.serviceName).toBe("Design de sobrancelhas");
-    expect(items[0]?.priceCents).toBe(6500);
+    expect(items[0]?.serviceName).toBe("Pedicure & esmaltação");
+    expect(items[0]?.priceCents).toBe(7000);
   });
 
   it("não permite reagendar agendamento concluído", async () => {

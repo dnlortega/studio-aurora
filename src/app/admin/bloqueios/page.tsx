@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { getScheduleBlocks } from "@/lib/booking/queries";
 import {
-  formatDayLong,
+  formatDayNumeric,
   formatMinuteRange,
   getSalonNow,
 } from "@/lib/dates";
@@ -83,8 +83,8 @@ export default async function AdminBlocksPage() {
                 {[...grouped.entries()].map(([day, dayBlocks]) => (
                   <div key={day} className="space-y-1.5">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium first-letter:uppercase">
-                        {formatDayLong(day)}
+                      <p className="text-sm font-medium">
+                        {formatDayNumeric(day)}
                       </p>
                       <Badge variant="outline" className="text-[0.62rem] text-muted-foreground">
                         {dayBlocks.length} bloqueio{dayBlocks.length > 1 ? "s" : ""}
@@ -92,7 +92,7 @@ export default async function AdminBlocksPage() {
                     </div>
                     <div className="space-y-1">
                       {dayBlocks.map((block) => {
-                        const label = `${formatDayLong(day)}, ${formatMinuteRange(
+                        const label = `${formatDayNumeric(day)}, ${formatMinuteRange(
                           block.startMinute,
                           block.endMinute,
                         )}`;

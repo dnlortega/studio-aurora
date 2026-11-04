@@ -123,7 +123,7 @@ export function ServiceFormDialog({
               id="service-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Ex.: Corte autoral"
+              placeholder="Ex.: Spa das mãos"
               maxLength={80}
               aria-invalid={Boolean(errors.name)}
             />

@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/guards";
-import { formatPhoneInput } from "@/lib/dates";
+import { formatDateInZone, formatPhoneInput } from "@/lib/dates";
 import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = { title: "Perfil e preferências" };
@@ -47,11 +47,7 @@ export default async function ProfilePage({
     searchParams,
   ]);
 
-  const memberSince = new Intl.DateTimeFormat("pt-BR", {
-    month: "long",
-    year: "numeric",
-    timeZone: settings.timezone,
-  }).format(user.createdAt);
+  const memberSince = formatDateInZone(user.createdAt, settings.timezone);
 
   const profileMessage = params.erro
     ? (profileErrors[params.erro] ?? profileErrors.dados)
@@ -155,7 +151,7 @@ export default async function ProfilePage({
                   <p className="text-xs text-muted-foreground">
                     Cliente desde
                   </p>
-                  <p className="first-letter:uppercase">{memberSince}</p>
+                  <p className="tabular-nums">{memberSince}</p>
                 </div>
               </div>
             </CardContent>

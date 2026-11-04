@@ -11,6 +11,12 @@
 # workflow falha logo no primeiro passo em vez de pular testes e dar verde.
 #
 # O `AUTH_SECRET` abaixo é fictício, só para a derivação de sessão funcionar.
+#
+# Imagem e versões fixas: `ubuntu-24.04` em vez de `ubuntu-latest` (a troca do
+# rótulo para Ubuntu 26 estava em andamento e o `playwright install --with-deps`
+# só tem pacotes garantidos na 24.04) e Node 24, o mesmo usado localmente. As
+# actions checkout/setup-node/upload-artifact estão na maior versão maior, que já
+# roda em Node 24 — com @v4 o runner avisava que o Node 20 estava obsoleto.
 name: CI
 
 on:
@@ -26,14 +32,14 @@ concurrency:
 jobs:
   qualidade:
     name: Types, lint, testes e build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       AUTH_SECRET: ci-only-secret-0000000000000000000000000000000000000000000000000000
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       NEXT_PUBLIC_APP_URL: http://localhost:3000
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Exigir o banco Neon (segredo DATABASE_URL)
         run: |
@@ -42,9 +48,9 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Instalar dependências
@@ -63,7 +69,7 @@ jobs:
         run: npm run build
 
       - name: Guardar artefatos do build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: next-build
@@ -73,12 +79,12 @@ jobs:
 
   e2e:
     name: Playwright (ponta a ponta)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Exigir o banco Neon (segredo DATABASE_URL)
         run: |
@@ -87,9 +93,9 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Instalar dependências
@@ -102,7 +108,7 @@ jobs:
         run: npm run test:e2e
 
       - name: Publicar relatório e capturas de falha
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report

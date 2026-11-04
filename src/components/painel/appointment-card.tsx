@@ -1,4 +1,4 @@
-import { ArrowRight, Clock3, Scissors } from "lucide-react";
+import { ArrowRight, Clock3, Hand } from "lucide-react";
 
 import { IconLink } from "@/components/shared/icon-button";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -6,10 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { AppointmentListItem } from "@/lib/booking/queries";
 import {
   formatCurrency,
+  formatDayNumeric,
   formatDayShort,
   formatDuration,
   formatMinuteRange,
-  formatMonth,
 } from "@/lib/dates";
 
 export function AppointmentCard({
@@ -22,13 +22,6 @@ export function AppointmentCard({
   showPrice?: boolean;
 }) {
   const date = appointment.startsOn;
-  const dayNumber = date.slice(8, 10);
-  const monthShort = new Intl.DateTimeFormat("pt-BR", {
-    month: "short",
-    timeZone: "UTC",
-  })
-    .format(new Date(`${date}T12:00:00.000Z`))
-    .replace(".", "");
   const weekday = formatDayShort(date).split(",")[0] ?? "";
   const names = appointment.items.map((item) => item.serviceName);
   const target = href ?? `/painel/agendamentos/${appointment.id}`;
@@ -36,13 +29,12 @@ export function AppointmentCard({
   return (
     <Card className="border-border/80 transition-colors hover:border-primary/30">
       <CardContent className="flex items-start gap-3 p-4 sm:gap-4">
-        <div className="flex w-14 shrink-0 flex-col items-center rounded-xl border border-border/70 bg-secondary/60 py-2">
-          <span className="text-[0.6rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            {monthShort}
-          </span>
-          <span className="font-heading text-2xl leading-tight">{dayNumber}</span>
+        <div className="flex w-[4.5rem] shrink-0 flex-col items-center rounded-xl border border-border/70 bg-secondary/60 px-1 py-2 text-center">
           <span className="text-[0.6rem] first-letter:uppercase text-muted-foreground">
             {weekday}
+          </span>
+          <span className="font-heading text-xs leading-tight tabular-nums">
+            {formatDayNumeric(date)}
           </span>
         </div>
 
@@ -55,7 +47,7 @@ export function AppointmentCard({
             <StatusBadge status={appointment.status} />
           </div>
           <p className="flex items-start gap-1.5 text-sm text-foreground">
-            <Scissors className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+            <Hand className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
             <span className="line-clamp-2">
               {names.length > 0 ? names.join(" · ") : "Atendimento"}
             </span>
@@ -69,7 +61,7 @@ export function AppointmentCard({
 
         <IconLink
           href={target}
-          label={`Ver detalhes do agendamento de ${formatMonth(date.slice(0, 7))}`}
+          label={`Ver detalhes do agendamento de ${formatDayNumeric(date)}`}
           variant="ghost"
           size="icon-sm"
           className="shrink-0"

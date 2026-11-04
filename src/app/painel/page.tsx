@@ -34,7 +34,7 @@ import {
 import {
   daysBetween,
   formatCurrency,
-  formatDayLong,
+  formatDayNumeric,
   formatDuration,
   formatMinuteRange,
   getSalonNow,
@@ -87,7 +87,7 @@ export default async function PainelHomePage({
               : "Pronta para o próximo cuidado? Escolha um serviço e veja os horários livres."}
           </p>
         </div>
-        <IconLink href="/agendar" label="Novo agendamento" className="self-start sm:self-auto">
+        <IconLink href="/" label="Novo agendamento" className="self-start sm:self-auto">
           <CalendarPlus className="size-4" />
         </IconLink>
       </div>
@@ -126,8 +126,8 @@ export default async function PainelHomePage({
                   <StatusBadge status={next.status} />
                 </div>
                 <div>
-                  <p className="font-heading text-2xl first-letter:uppercase sm:text-3xl">
-                    {formatDayLong(next.startsOn)}
+                  <p className="font-heading text-2xl sm:text-3xl">
+                    {formatDayNumeric(next.startsOn)}
                   </p>
                   <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                     <span className="inline-flex items-center gap-1.5 tabular-nums">
@@ -162,7 +162,7 @@ export default async function PainelHomePage({
                 {canRescheduleNext &&
                 (next.status === "pending" || next.status === "confirmed") ? (
                   <IconLink
-                    href={`/agendar?reagendar=${next.id}`}
+                    href={`/?reagendar=${next.id}`}
                     label="Reagendar"
                     variant="outline"
                   >
@@ -181,7 +181,7 @@ export default async function PainelHomePage({
                 title="Nenhum horário marcado"
                 description="Escolha os serviços que você quer e veja os horários realmente disponíveis na agenda do salão."
                 action={
-                  <IconLink href="/agendar" label="Encontrar um horário">
+                  <IconLink href="/" label="Encontrar um horário">
                     <CalendarPlus className="size-4" />
                   </IconLink>
                 }
@@ -239,7 +239,7 @@ export default async function PainelHomePage({
             <CardContent className="space-y-1 p-2 pt-0">
               {[
                 {
-                  href: "/agendar",
+                  href: "/",
                   icon: CalendarPlus,
                   label: "Agendar um novo horário",
                 },
@@ -284,8 +284,8 @@ export default async function PainelHomePage({
                   {history.map((appointment) => (
                     <div key={appointment.id} className="space-y-1">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-medium first-letter:uppercase">
-                          {formatDayLong(appointment.startsOn)}
+                        <p className="text-xs font-medium">
+                          {formatDayNumeric(appointment.startsOn)}
                         </p>
                         <StatusBadge
                           status={appointment.status}

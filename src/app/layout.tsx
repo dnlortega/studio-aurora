@@ -27,14 +27,26 @@ export const metadata: Metadata = {
     template: "%s · Studio Aurora",
   },
   description:
-    "Agende cortes, coloração, manicure e cuidados de beleza no Studio Aurora. Escolha serviços, veja horários livres e confirme em poucos passos.",
+    "Agende manicure, pedicure e unhas em gel no Studio Aurora. Escolha serviços, veja horários livres e confirme em poucos passos.",
   applicationName: "Studio Aurora",
+  /**
+   * Substitui a tag `<meta name="generator" content="Next.js …">` pela marca do
+   * estúdio: o framework é detalhe de implementação de quem usa o site.
+   */
+  generator: "Studio Aurora",
+  twitter: {
+    card: "summary_large_image",
+    title: "Studio Aurora — Agendamento online",
+    description:
+      "Escolha seus serviços, encontre o melhor horário e confirme em segundos.",
+  },
   keywords: [
-    "salão de beleza",
+    "estúdio de unhas",
     "agendamento online",
-    "cabelo",
     "manicure",
-    "coloração",
+    "pedicure",
+    "unhas em gel",
+    "esmaltação",
   ],
   openGraph: {
     type: "website",
@@ -52,7 +64,21 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+/**
+ * Nada de cache. Cada visita renderiza a página do zero, lendo o Neon naquele
+ * instante: nenhuma rota é pré-renderizada no build, nenhuma resposta de
+ * `fetch` é guardada e nenhuma revalidação temporada existe no app.
+ *
+ * `force-dynamic` já equivale a `fetchCache: "force-no-store"` +
+ * `revalidate: 0`; os três aparecem juntos para que a intenção fique explícita
+ * e continue verdadeira se algum segmento mudar de configuração.
+ *
+ * A configuração se propaga para layouts e páginas filhos. Rotas de API são
+ * segmentos separados e declaram a própria política em `src/app/api/**`.
+ */
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

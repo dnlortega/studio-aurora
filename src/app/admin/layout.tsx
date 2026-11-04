@@ -41,11 +41,13 @@ export default async function AdminLayout({
   return (
     <div className="min-h-svh bg-muted/30 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
       <aside className="sticky top-0 hidden h-svh flex-col border-r border-border/70 bg-card lg:flex">
-        <div className="flex items-center justify-between gap-2 px-5 py-5">
+        {/* Em uma coluna só: ao lado do nome o selo "Admin" espremia a
+            marca e o nome aparecia cortado ("Studio Auro…"). */}
+        <div className="space-y-2.5 px-5 py-5">
           <Logo name={settings.salonName} href="/admin" />
           <Badge
             variant="outline"
-            className="gap-1 border-primary/25 bg-primary/5 text-[0.6rem] text-primary"
+            className="flex w-fit gap-1 border-primary/25 bg-primary/5 text-[0.6rem] text-primary"
           >
             <ShieldCheck className="size-3" />
             Admin
@@ -79,7 +81,11 @@ export default async function AdminLayout({
             Ver site público
           </Link>
 
-          <LogoutButton variant="outline" className="w-full justify-start text-sm" />
+          <LogoutButton
+            label="Sair"
+            variant="outline"
+            className="w-full justify-start text-sm"
+          />
         </div>
       </aside>
 

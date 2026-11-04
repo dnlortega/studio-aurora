@@ -22,7 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getRecentAuditLogs } from "@/lib/booking/queries";
-import { formatDateTime, formatFullDate, getSalonNow } from "@/lib/dates";
+import { formatDateTime, formatDayNumeric, getSalonNow } from "@/lib/dates";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getSettings } from "@/lib/settings";
 
@@ -106,8 +106,8 @@ export default async function AdminSettingsPage() {
             <CardContent className="space-y-2 text-xs leading-relaxed">
               <div className="flex items-baseline justify-between gap-3">
                 <span className="text-muted-foreground">Hoje no salão</span>
-                <span className="text-right font-medium first-letter:uppercase">
-                  {formatFullDate(now.day)}
+                <span className="text-right font-medium">
+                  {formatDayNumeric(now.day)}
                 </span>
               </div>
               <div className="flex items-baseline justify-between gap-3">

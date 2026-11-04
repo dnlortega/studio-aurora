@@ -29,7 +29,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
   formatCurrency,
-  formatDayLong,
+  formatDayNumeric,
   formatDuration,
   formatMinuteRange,
   minutesToTime,
@@ -443,8 +443,8 @@ export function AdminBookingForm({
               <p className="text-xs text-muted-foreground">Data e horário</p>
               {minute !== null ? (
                 <>
-                  <p className="font-medium first-letter:uppercase">
-                    {formatDayLong(day)}
+                  <p className="font-medium">
+                    {formatDayNumeric(day)}
                   </p>
                   <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Clock3 className="size-3" />

@@ -72,6 +72,7 @@ export default async function PainelLayout({
           ) : null}
 
           <LogoutButton
+            label="Sair"
             variant="outline"
             className={cn("w-full justify-start text-sm")}
           />

@@ -7,6 +7,15 @@ import { minutesToTime } from "@/lib/dates";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
+/**
+ * CSV por período, sempre lido do Neon no instante da requisição: nada de
+ * resposta em cache e nada de buffer pré-renderizado no build.
+ */
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
 function csvCell(value: string | number | null | undefined): string {
   const text = value === null || value === undefined ? "" : String(value);
   if (/[";\r\n]/.test(text)) {

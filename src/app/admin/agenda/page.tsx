@@ -11,6 +11,10 @@ import {
 
 import { AgendaToolbar, type AgendaView } from "@/components/admin/agenda-toolbar";
 import { QuickStatus } from "@/components/admin/quick-status";
+import {
+  MissingPhoneHint,
+  WhatsAppReminderLink,
+} from "@/components/admin/whatsapp-reminder-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { IconLink } from "@/components/shared/icon-button";
 import { PageHeader } from "@/components/shared/page-header";
@@ -35,7 +39,7 @@ import {
   daysInMonth,
   formatCurrency,
   formatDateRange,
-  formatDayLong,
+  formatDayNumeric,
   formatDuration,
   formatMinuteRange,
   formatMonth,
@@ -125,7 +129,7 @@ export default async function AdminAgendaPage({
 
   const label =
     view === "day"
-      ? formatDayLong(date)
+      ? formatDayNumeric(date)
       : view === "week"
         ? formatDateRange(rangeStart, rangeEnd)
         : formatMonth(monthKey(date));
@@ -161,7 +165,7 @@ export default async function AdminAgendaPage({
           appointments={appointments}
           hours={hours}
           blocks={blocks}
-          timezone={settings.timezone}
+          settings={settings}
         />
       ) : null}
 
@@ -189,20 +193,22 @@ export default async function AdminAgendaPage({
 
 type HoursRow = Awaited<ReturnType<typeof getBusinessHours>>[number];
 type BlockRow = Awaited<ReturnType<typeof getBlocksBetween>>[number];
+type SalonSettings = Awaited<ReturnType<typeof getSettings>>;
 
 function DayView({
   date,
   appointments,
   hours,
   blocks,
-  timezone,
+  settings,
 }: {
   date: string;
   appointments: AppointmentListItem[];
   hours: HoursRow[];
   blocks: BlockRow[];
-  timezone: string;
+  settings: SalonSettings;
 }) {
+  const timezone = settings.timezone;
   const weekday = weekdayOf(date);
   const dayHours = hours.find((row) => row.weekday === weekday) ?? null;
   const dayBlocks = blocks.filter((block) => block.day === date);
@@ -303,6 +309,12 @@ function DayView({
                       appointmentId={appointment.id}
                       status={appointment.status}
                       compact
+                    />
+                    <WhatsAppReminderLink
+                      appointment={appointment}
+                      salonName={settings.salonName}
+                      address={settings.address}
+                      fallback={<MissingPhoneHint name={appointment.clientName} />}
                     />
                     <IconLink
                       href={`/admin/agendamentos/${appointment.id}`}
@@ -599,7 +611,7 @@ function MonthView({
                   isToday && "border-primary/50 bg-primary/[0.04]",
                   !dayHours?.isOpen && "bg-muted/20 text-muted-foreground",
                 )}
-                aria-label={`${formatDayLong(day)}: ${dayAppointments.length} atendimentos`}
+                aria-label={`${formatDayNumeric(day)}: ${dayAppointments.length} atendimentos`}
               >
                 <span
                   className={cn(

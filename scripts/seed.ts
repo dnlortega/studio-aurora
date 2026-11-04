@@ -11,7 +11,12 @@ import {
 import { getSalonNow, minutesToTime } from "@/lib/dates";
 import { createDatabase } from "@/lib/db";
 import { appointments, settings } from "@/lib/db/schema";
-import { ensureUser, seedCatalog } from "./seed-data";
+import {
+  DEMO_NOTES,
+  ensureUser,
+  seedCatalog,
+  STUDIO_PROFILE,
+} from "./seed-data";
 
 /**
  * Seed idempotente: cria serviços do catálogo e dados públicos do salão.
@@ -30,8 +35,6 @@ import { ensureUser, seedCatalog } from "./seed-data";
  *   tem nenhum e `SEED_DEMO_APPOINTMENTS` não está como `false`, o que mantém o
  *   seed idempotente.
  */
-
-const DEMO_NOTES = "Agendamento de demonstração criado pelo seed.";
 
 /** Senha de trabalho: forte, efêmera e mostrada uma única vez. */
 function generatedPassword(): string {
@@ -56,17 +59,14 @@ async function main() {
       await db
         .update(settings)
         .set({
-          description:
-            row.description ??
-            "Studio de beleza autoral em São Paulo. Cortes, cor, cuidados e ocasiões especiais com agenda organizada e atendimento individual.",
-          address: row.address ?? "Rua Harmonia, 402 — Vila Madalena, São Paulo/SP",
-          phone: row.phone ?? "(11) 3030-1414",
-          whatsapp: row.whatsapp ?? "5511930301414",
-          email: row.email ?? "contato@studioaurora.com.br",
-          instagram: row.instagram ?? "@studioaurora",
-          publicNotice:
-            row.publicNotice ??
-            "Atendimento por hora marcada. Chegue com 10 minutos de antecedência para aproveitar o café da casa.",
+          tagline: row.tagline || STUDIO_PROFILE.tagline,
+          description: row.description ?? STUDIO_PROFILE.description,
+          address: row.address ?? STUDIO_PROFILE.address,
+          phone: row.phone ?? STUDIO_PROFILE.phone,
+          whatsapp: row.whatsapp ?? STUDIO_PROFILE.whatsapp,
+          email: row.email ?? STUDIO_PROFILE.email,
+          instagram: row.instagram ?? STUDIO_PROFILE.instagram,
+          publicNotice: row.publicNotice ?? STUDIO_PROFILE.publicNotice,
           updatedAt: new Date(),
         })
         .where(eq(settings.id, 1));

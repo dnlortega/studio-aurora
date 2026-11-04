@@ -1,0 +1,1 @@
+ALTER TABLE "settings" ALTER COLUMN "tagline" SET DEFAULT 'Unhas cuidadas no seu tempo.';

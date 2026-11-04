@@ -10,6 +10,11 @@ export type BottomNavItem = {
   href: string;
   label: string;
   icon: ComponentType<{ className?: string }>;
+  /**
+   * Rotas que também devem acender este item. Usado pela tela de agendamento,
+   * que existe em `/` e no atalho histórico `/agendar`.
+   */
+  activeOn?: readonly string[];
 };
 
 /**
@@ -34,8 +39,9 @@ export function BottomNav({
     >
       <div className="mx-auto flex w-full max-w-4xl items-stretch gap-0.5 overflow-x-auto px-1 pt-1 pb-[max(0.35rem,env(safe-area-inset-bottom))] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {items.map((item) => {
-          const active =
-            item.href === "/admin" || item.href === "/painel"
+          const active = item.activeOn
+            ? item.activeOn.includes(pathname)
+            : item.href === "/admin" || item.href === "/painel"
               ? pathname === item.href
               : pathname === item.href ||
                 pathname.startsWith(`${item.href}/`);

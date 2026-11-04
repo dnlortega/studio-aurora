@@ -12,8 +12,10 @@ const e2eDatabaseUrl = resolveTestDatabaseUrl("e2e");
 export default defineConfig({
   testDir: "./tests/e2e",
   // O banco agora é externo (Neon): cada página faz várias consultas e cada
-  // consulta é uma ida pela rede. Os tempos do PGlite local não valem mais.
-  timeout: 180_000,
+  // consulta é uma ida pela rede. Os tempos do PGlite local não valem mais, e
+  // em dev ainda soma a compilação on-demand de cada rota. 180s ficou curto
+  // para os fluxos que atravessam site, painel e administração.
+  timeout: 300_000,
   expect: { timeout: 30_000 },
   fullyParallel: false,
   workers: 1,

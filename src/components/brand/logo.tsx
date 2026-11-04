@@ -16,7 +16,7 @@ export function Logo({
   return (
     <Link
       href={href}
-      className={cn("group inline-flex items-center gap-2.5", className)}
+      className={cn("group inline-flex min-w-0 items-center gap-2.5", className)}
       aria-label={`${name} — página inicial`}
     >
       <span
@@ -49,10 +49,10 @@ export function Logo({
           <circle cx="12" cy="8.2" r="1.1" fill="currentColor" />
         </svg>
       </span>
-      <span className="flex flex-col leading-none">
+      <span className="flex min-w-0 flex-col leading-none">
         <span
           className={cn(
-            "font-heading text-lg font-medium tracking-tight",
+            "truncate font-heading text-lg font-medium tracking-tight",
             light ? "text-white" : "text-foreground",
           )}
         >
@@ -64,7 +64,7 @@ export function Logo({
             light ? "text-white/65" : "text-muted-foreground",
           )}
         >
-          beleza & cuidado
+          unhas & cuidado
         </span>
       </span>
     </Link>
